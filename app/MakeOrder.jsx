@@ -74,7 +74,7 @@ export default function MakeOrder({moveDisappearNavigatorSignal}) {
           enablePanDownToClose
           enableDynamicSizing={false}
           onChange={(index) => setIsOpen(index !== -1)} // track open/close
-        //   onClose={setSendDisappearNavigatorSinal(false)}
+          onClose={()=>setSendDisappearNavigatorSinal(false)}
         >
 
 
@@ -90,7 +90,7 @@ export default function MakeOrder({moveDisappearNavigatorSignal}) {
             vertical
             showsVerticalScrollIndicator = {false}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={{paddingBottom: 10}}
+            contentContainerStyle={{paddingBottom: 200}}
             renderItem={({item}) => (
                 <View style={styles.checkboxContainer}>
                 <Pressable
