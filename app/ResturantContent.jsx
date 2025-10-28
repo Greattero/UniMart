@@ -12,7 +12,7 @@ import {
 } from "@expo-google-fonts/montserrat";
 
 
-export default function ResturantContent({onOpen, foodSelected, disappearNavigator}){
+export default function ResturantContent({onOpen, foodSelected, disappearNavigator, foodPriceSelected}){
    const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
     Montserrat_600SemiBold,
@@ -24,13 +24,13 @@ export default function ResturantContent({onOpen, foodSelected, disappearNavigat
 
     useEffect(()=>{
         const fetchedContent = [
-      { id: '1', name: 'Burger', price: '₵25', image: require("../assets/images/landjollof.jpg")},
-      { id: '2', name: 'Pizza', price: '₵40', image: require("../assets/images/oilrice.jpg") },
-      { id: '3', name: 'Burger', price: '₵25', image: require("../assets/images/landjollof.jpg")},
-      { id: '4', name: 'Pizza', price: '₵40', image: require("../assets/images/oilrice.jpg") },
-      { id: '5', name: 'Burger', price: '₵25', image: require("../assets/images/landjollof.jpg")},
-      { id: '6', name: 'Pizza', price: '₵40', image: require("../assets/images/jollof.jpg") },
-      { id: '7', name: 'Burger', price: '₵25', image: require("../assets/images/burger.jpg")},   
+      { id: '1', name: 'Burger', price: 25, image: require("../assets/images/landjollof.jpg")},
+      { id: '2', name: 'Pizza', price: 40, image: require("../assets/images/oilrice.jpg") },
+      { id: '3', name: 'Burger', price: 60, image: require("../assets/images/landjollof.jpg")},
+      { id: '4', name: 'Pizza', price: 8, image: require("../assets/images/oilrice.jpg") },
+      { id: '5', name: 'Burger', price: 80, image: require("../assets/images/landjollof.jpg")},
+      { id: '6', name: 'Pizza', price: 35, image: require("../assets/images/jollof.jpg") },
+      { id: '7', name: 'Burger', price: 50, image: require("../assets/images/burger.jpg")},   
         
         ]
 
@@ -74,11 +74,12 @@ export default function ResturantContent({onOpen, foodSelected, disappearNavigat
                 style={styles.menuContainer}
                 onPress={() => {onOpen();
                     foodSelected(item.name);
+                    foodPriceSelected(item.price)
                     disappearNavigator(true);
                 }}
                 >
                     <Text style={[styles.menuDetails,{fontSize:20,fontWeight:"bold"}]}>{item.name}</Text>
-                    <Text style={styles.menuDetails}>{item.price}</Text>
+                    <Text style={styles.menuDetails}>₵{item.price}</Text>
                     <View style={styles.menuPictureContainer}>
                         <Image source={item.image} style={styles.menuPicture}/>
                     </View>
