@@ -5,11 +5,13 @@ import {
   useFonts,
 } from "@expo-google-fonts/montserrat";
 import Octicons from '@expo/vector-icons/Octicons';
+import { child, get, getDatabase, ref } from "firebase/database";
 import React, { useEffect } from "react";
 import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { app } from "./firebaseConfig.js"; // your firebaseConfig file
 
 
-export default function FoodDisplay(){
+export default function FoodDisplay({nameOfResturant, nameOfResturant2}){
 
    const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
@@ -17,28 +19,55 @@ export default function FoodDisplay(){
     Montserrat_700Bold,
     });
 
+  const db = getDatabase(app);
+
+
 
     const [rice, setRice] = React.useState([]);
+    const [resturants, setResturants] = React.useState([]);
 
-    useEffect(()=>{
-    const fetchedFoods = [
-      { id: '1', name: 'Burger', price: '₵25', image: require("../assets/images/landjollof.jpg")},
-      { id: '2', name: 'Pizza', price: '₵40', image: require("../assets/images/oilrice.jpg") },
-      { id: '3', name: 'Burger', price: '₵25', image: require("../assets/images/landjollof.jpg")},
-      { id: '4', name: 'Pizza', price: '₵40', image: require("../assets/images/oilrice.jpg") },
-      { id: '5', name: 'Burger', price: '₵25', image: require("../assets/images/landjollof.jpg")},
-      { id: '6', name: 'Pizza', price: '₵40', image: require("../assets/images/jollof.jpg") },
-      { id: '7', name: 'Burger', price: '₵25', image: require("../assets/images/burger.jpg")},
-      { id: '8', name: 'Pizza', price: '₵40', image: require("../assets/images/burger.jpg") },
-      { id: '9', name: 'Burger', price: '₵25', image: require("../assets/images/burger.jpg")},
-      { id: '10', name: 'Pizza', price: '₵40', image: require("../assets/images/burger.jpg") },
-      { id: '11', name: 'Burger', price: '₵25', image: require("../assets/images/burger.jpg")},
-      { id: '12', name: 'Pizza', price: '₵40', image: require("../assets/images/burger.jpg") },
-    ];
+    useEffect(() => {
+      const fetchedFoods = async () => {
+        const dbRef = ref(db);
+        const snapshot = await get(child(dbRef, "foodDisplay"));
 
-    setRice(fetchedFoods);
+        if (snapshot.exists()) {
+          const dataObj = snapshot.val();
+          const dataArray = Object.keys(dataObj).map((key) => ({
+            id: key,
+            ...dataObj[key],
+          }));
+          console.log("Fetched foods:", dataArray);
+          setRice(dataArray);
+        } else {
+          console.log("No data available");
+        }
+      };
 
-    },[])
+      fetchedFoods();
+    }, []);
+
+
+    useEffect(() => {
+      const fetchedFoods = async () => {
+        const dbRef = ref(db);
+        const snapshot = await get(child(dbRef, "restaurants"));
+
+        if (snapshot.exists()) {
+          const dataObj = snapshot.val();
+          const dataArray = Object.keys(dataObj).map((key) => ({
+            id: key,
+            ...dataObj[key],
+          }));
+          console.log("Fetched resturant:", dataArray);
+          setResturants(dataArray);
+        } else {
+          console.log("No data available");
+        }
+      };
+
+      fetchedFoods();
+    }, []);
 
     if (!fontsLoaded) {
       return null; // or <ActivityIndicator />
@@ -63,15 +92,21 @@ export default function FoodDisplay(){
                 renderItem={({item}) => (
                     <View>
                         <View style={styles.card}>
-                            <Image source={item.image} style={styles.image}/>
-                            <Pressable onPress={()=>console.log("Hiii")} 
+                            <Image source={{uri: item.image}} style={styles.image}/>
+                            <Pressable onPress={()=>{console.log("Hiii");
+                                nameOfResturant({
+                                resturant: item.restaurantName,
+                                foodPrice: item.price,
+                                autoOpenFood: item.name, // 👈 include which food triggered it
+                              });
+                            }} 
                             style={styles.addBtn}>
                                 <Text style={styles.addText}>+</Text>
                             </Pressable>
                         </View>
                         
                             <Text style={styles.name}>{item.name}</Text>
-                            <Text style={styles.resturant}>Jesi Dish</Text>
+                            <Text style={styles.resturant}>{item.restaurantName}</Text>
                             <Text style={styles.price}>{item.price}</Text>
                             
                     </View>
@@ -91,14 +126,19 @@ export default function FoodDisplay(){
                     <View>
                         <View style={styles.card}>
                             <Image source={item.image} style={styles.image}/>
-                            <Pressable onPress={()=>console.log("Hiii")} 
+                            <Pressable onPress={()=>{console.log("Hiii");
+                                nameOfResturant({
+                                resturant: item.resturant,
+                                autoOpenFood: item.name, // 👈 include which food triggered it
+                              });
+                            }} 
                             style={styles.addBtn}>
                                 <Text style={styles.addText}>+</Text>
                             </Pressable>
                         </View>
                         
                             <Text style={styles.name}>{item.name}</Text>
-                            <Text style={styles.resturant}>Jesi Dish</Text>
+                            <Text style={styles.resturant}>{item.resturant}</Text>
                             <Text style={styles.price}>{item.price}</Text>
                             
                     </View>
@@ -119,7 +159,12 @@ export default function FoodDisplay(){
                     <View>
                         <View style={styles.card}>
                             <Image source={item.image} style={styles.image}/>
-                            <Pressable onPress={()=>console.log("Hiii")} 
+                            <Pressable onPress={()=>{console.log("Hiii");
+                                nameOfResturant({
+                                resturant: item.resturant,
+                                autoOpenFood: item.name, // 👈 include which food triggered it
+                              });
+                            }} 
                             style={styles.addBtn}>
                                 <Text style={styles.addText}>+</Text>
                             </Pressable>
@@ -136,7 +181,7 @@ export default function FoodDisplay(){
                 <Text style={styles.foodHeader}>All Resturants</Text>
 
                 <FlatList
-                data={rice}
+                data={resturants}
                 vertical
                 scrollEnabled={false}  // 👈 add this
                 showsHorizontalScrollIndicator={false}
@@ -144,11 +189,15 @@ export default function FoodDisplay(){
                 contentContainerStyle={{padding: 10}}
                 renderItem={({item}) => (
                     <View>
-                        <View style={styles.resturantCard}>
-                            <Image source={item.image} style={styles.resturantImage}/>
-                        </View>
+                        <Pressable onPress={()=>{console.log("hipi");
+                                nameOfResturant2(item.id);
+                                console.log(`eiiiiii ${item.id}`)
+                            }} 
+                            style={styles.resturantCard}>
+                            <Image source={{uri:item.coverPhoto}} style={styles.resturantImage}/>
+                        </Pressable>
 
-                            <Text style={styles.resturantName}>Jesi Dish</Text>
+                            <Text style={styles.resturantName}>{item.id}</Text>
                         <View style={styles.starRating}>    
                             <Octicons name="star-fill" size={13} color="orange" />
                             <Text style={styles.rateDigit}>5.0</Text>       

@@ -1,18 +1,19 @@
-import { Ionicons } from "@expo/vector-icons"; // ✅ correct import
-import React, { useEffect,useState } from "react";
-import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
-import Octicons from '@expo/vector-icons/Octicons';
 import {
-  Montserrat_400Regular,
-  Montserrat_600SemiBold,
-  Montserrat_700Bold,
-  useFonts,
+    Montserrat_400Regular,
+    Montserrat_600SemiBold,
+    Montserrat_700Bold,
+    useFonts,
 } from "@expo-google-fonts/montserrat";
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import Octicons from '@expo/vector-icons/Octicons';
+import { get, getDatabase, ref } from "firebase/database";
+import React, { useEffect, useState } from "react";
+import { FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { app } from "./firebaseConfig";
 
 
-export default function ResturantContent({onOpen, foodSelected, disappearNavigator, foodPriceSelected}){
+export default function ResturantContent({manuallyOpenSheet,  disappearNavigator, getNameOfResturant, getNameOfResturant2, setRestaurantDataTransfer,sendPrice,sendImage}){
    const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
     Montserrat_600SemiBold,
@@ -22,25 +23,67 @@ export default function ResturantContent({onOpen, foodSelected, disappearNavigat
 
     const [content, setContent] = useState([]);
 
-    useEffect(()=>{
-        const fetchedContent = [
-      { id: '1', name: 'Burger', price: 25, image: require("../assets/images/landjollof.jpg")},
-      { id: '2', name: 'Pizza', price: 40, image: require("../assets/images/oilrice.jpg") },
-      { id: '3', name: 'Burger', price: 60, image: require("../assets/images/landjollof.jpg")},
-      { id: '4', name: 'Pizza', price: 8, image: require("../assets/images/oilrice.jpg") },
-      { id: '5', name: 'Burger', price: 80, image: require("../assets/images/landjollof.jpg")},
-      { id: '6', name: 'Pizza', price: 35, image: require("../assets/images/jollof.jpg") },
-      { id: '7', name: 'Burger', price: 50, image: require("../assets/images/burger.jpg")},   
+    // useEffect(()=>{
+    //     const fetchedContent = [
+    //   { id: '1', name: 'Burger', price: 25, image: require("../assets/images/landjollof.jpg")},
+    //   { id: '2', name: 'Pizza', price: 40, image: require("../assets/images/oilrice.jpg") },
+    //   { id: '3', name: 'Burger', price: 60, image: require("../assets/images/landjollof.jpg")},
+    //   { id: '4', name: 'Pizza', price: 8, image: require("../assets/images/oilrice.jpg") },
+    //   { id: '5', name: 'Burger', price: 80, image: require("../assets/images/landjollof.jpg")},
+    //   { id: '6', name: 'Pizza', price: 35, image: require("../assets/images/jollof.jpg") },
+    //   { id: '7', name: 'Burger', price: 50, image: require("../assets/images/burger.jpg")},   
         
-        ]
+    //     ]
 
-        setContent(fetchedContent);
-    },[])
+    //     setContent(fetchedContent);
+    // },[])
+
+
+    useEffect(() => {
+    const fetchFoods = async () => {
+        const db = getDatabase(app);
+        const dbRef = ref(db, "restaurants");
+
+        const snapshot = await get(dbRef);
+        if (snapshot.exists()) {
+        const data = snapshot.val(); // this is an object
+        const restaurantsArray = Object.keys(data).map((key) => ({
+            id: key,
+            ...data[key],
+        }));
+
+        setRestaurantDataTransfer?.(restaurantsArray);
+
+        // Now find the restaurant that matches
+        const foundRestaurant = restaurantsArray.find(
+            (r) => (r.restaurantName === (getNameOfResturant || getNameOfResturant2) || r.id === (getNameOfResturant || getNameOfResturant2))
+        );
+
+        // If it has foods, set them as content
+        if (foundRestaurant && foundRestaurant.foods) {
+            const foodsArray = Object.keys(foundRestaurant.foods).map((key) => ({
+            id: key,
+            ...foundRestaurant.foods[key],
+            }));
+            setContent(foodsArray);
+            console.log(`yooo ${foodsArray[0].name}`)
+        } else {
+            setContent([]);
+        }
+        } else {
+        setContent([]);
+        }
+    };
+
+    fetchFoods();
+    }, [getNameOfResturant]);
+
 
     if (!fontsLoaded) {
       return null; // or <ActivityIndicator />
     }
 
+console.log("onOpen:", manuallyOpenSheet);
 
     
     return(
@@ -48,7 +91,7 @@ export default function ResturantContent({onOpen, foodSelected, disappearNavigat
                     
             <Image source={require("../assets/images/landjollof.jpg")} style={styles.resturantPicture}/>
             <View style={styles.resturantDetailsContainer}>
-                <Text style={styles.resturantName}>Jesi Dish</Text>
+                <Text style={styles.resturantName}>{getNameOfResturant || getNameOfResturant2}</Text>
                 <View style={styles.delivery}>
                     <MaterialIcons name="delivery-dining" size={21} color="#d8d3d3ff" />
                     <Text style={styles.otherResturantDetails}>30min delivery</Text>
@@ -72,16 +115,16 @@ export default function ResturantContent({onOpen, foodSelected, disappearNavigat
             renderItem={({item}) => (
                 <Pressable 
                 style={styles.menuContainer}
-                onPress={() => {onOpen();
-                    foodSelected(item.name);
-                    foodPriceSelected(item.price)
-                    disappearNavigator(true);
+                onPress={() => {manuallyOpenSheet(item.name); // reverse to true if doesnt work
+                    disappearNavigator?.(true);
+                    sendPrice(item.price);
+                    sendImage(item.image)
                 }}
                 >
                     <Text style={[styles.menuDetails,{fontSize:20,fontWeight:"bold"}]}>{item.name}</Text>
                     <Text style={styles.menuDetails}>₵{item.price}</Text>
                     <View style={styles.menuPictureContainer}>
-                        <Image source={item.image} style={styles.menuPicture}/>
+                        <Image source={{uri:item.image}} style={styles.menuPicture}/>
                     </View>
 
                 </Pressable>

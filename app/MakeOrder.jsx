@@ -3,20 +3,22 @@ import BottomSheet from "@gorhom/bottom-sheet";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { FlatList, GestureHandlerRootView } from "react-native-gesture-handler";
-import ResturantContent from "./ResturantContent.jsx";
 
-export default function MakeOrder({moveDisappearNavigatorSignal}) {
+export default function MakeOrder({moveDisappearNavigatorSignal, getNameOfResturant, autoOpenFood, manuallyOpenFood, getFoodPrice, getRestaurantDataTransfer, onCloseCallback, getImage}) {
     const [list, setList] = useState();
     const sheetRef = useRef(null);
     const snapPoints = useMemo(() => ["85%"], []);
     const [isOpen, setIsOpen] = useState(false);
     const [selectedFood, setSelectedFood] = useState(); 
     const [selectedFoodPrice, setSelectedFoodPrice] = useState(0);
+    const [selectedFoodImage, setSelectedFoodImage] = useState();
+    const [activateSheetManually, setActivateSheetManually] = useState(null);
+    const [resturantFullData, setResturantFullData] = useState([]);
 
 
     const [checked, setChecked] = useState({});
 
-    const [sendDisappearNavigatorSignal, setSendDisappearNavigatorSinal] = useState(false);
+    // const [sendDisappearNavigatorSignal, setSendDisappearNavigatorSinal] = useState(false);
 
     const toggleCheckbox = (id) => {
     setChecked((prev) => ({
@@ -25,51 +27,106 @@ export default function MakeOrder({moveDisappearNavigatorSignal}) {
     }));
     };
 
+    useEffect(() => {
+          setActivateSheetManually(manuallyOpenFood)
+    },[manuallyOpenFood])
+
+      useEffect(() => {
+          setResturantFullData(getRestaurantDataTransfer)
+    },[getRestaurantDataTransfer])
+
+    useEffect(() => {
+      setSelectedFoodImage(getImage);
+    },[getImage])
 
     const [totalPrice, setTotalPrice] = useState();       
 
   const openSheet = () => sheetRef.current?.expand();
 
+  console.log(`confirm: ${activateSheetManually}`)
+
   useEffect(() => {
-    const fetchedList = [
-        { id: 1, name: "Fried Plantain", price: 5 },
-        { id: 2, name: "Grilled Chicken", price: 15 },
-        { id: 3, name: "Fried Fish", price: 12 },
-        { id: 4, name: "Beef Stew", price: 10 },
-        { id: 5, name: "Gizzard Sauce", price: 8 },
-        { id: 6, name: "Coleslaw", price: 5 },
-        { id: 7, name: "Boiled Egg", price: 4 },
-        { id: 8, name: "Extra Jollof Scoop", price: 6 },
-        ]
+    if (autoOpenFood || activateSheetManually) {
+      // wait briefly so components mount first
+      setTimeout(() => {
+        openSheet(); // 👈 automatically open bottom sheet
+      }, 300);
+    }
+  }, [autoOpenFood, activateSheetManually]);
+
+// useEffect(() => {
+//   setTimeout(() => {
+//     openSheet(); // automatically open whenever this screen shows
+//     console.log("chcahahahr")
+//   }, 100);
+// }, []); // runs only on mount
+
+  // useEffect(() => {
+  //   const fetchedList = [
+  //       { id: 1, name: "Fried Plantain", price: 5 },
+  //       { id: 2, name: "Grilled Chicken", price: 15 },
+  //       { id: 3, name: "Fried Fish", price: 12 },
+  //       { id: 4, name: "Beef Stew", price: 10 },
+  //       { id: 5, name: "Gizzard Sauce", price: 8 },
+  //       { id: 6, name: "Coleslaw", price: 5 },
+  //       { id: 7, name: "Boiled Egg", price: 4 },
+  //       { id: 8, name: "Extra Jollof Scoop", price: 6 },
+  //       ]
 
 
-    setList(fetchedList);
-  },[])
+  //   setList(fetchedList);
+  // },[])
+      console.log(`yyyyy ${autoOpenFood}`)
+      console.log(` bbbb ${resturantFullData.activateSheetManually}`)
+      useEffect(() => {
+        const selectedFood = activateSheetManually || autoOpenFood;
 
+        if (selectedFood && Array.isArray(resturantFullData)) {
+          const match = resturantFullData.find(item => item[selectedFood]);
+
+          if (match) {
+            const addOns = match[selectedFood].map((item, idx) => ({
+              id: idx.toString(), // or use a real ID if you have one
+              ...item,
+            }));
+            setList(addOns);
+            console.log("Found:", addOns);
+          } else {
+            setList([]);
+            console.log("No match found");
+          }
+        }
+      }, [resturantFullData, activateSheetManually, autoOpenFood]);
+
+
+
+  // console.log(`hmmm ${getNameOfResturant}`)
 
     useEffect(()=>{
     const totalCalculation = list
       ?.filter(item => checked[item.id]) // only selected items
-      .reduce((sum, item) => sum + item.price, selectedFoodPrice) // sum up prices
+      .reduce((sum, item) => sum + item.price, getFoodPrice) // sum up prices
 
     setTotalPrice(totalCalculation)
-    },[totalPrice,checked,selectedFoodPrice]) 
+    console.log(`pricee ${getFoodPrice}`)
+    },[totalPrice,checked,getFoodPrice]) 
 
 
-    useEffect(() => {
-    moveDisappearNavigatorSignal(sendDisappearNavigatorSignal);
-    }, [sendDisappearNavigatorSignal]);
+    // useEffect(() => {
+    // moveDisappearNavigatorSignal(sendDisappearNavigatorSignal);
+    // }, [sendDisappearNavigatorSignal]);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1 }} >
       <View style={{ flex: 1 }}>
-        <ResturantContent 
+        {/* <ResturantContent 
         onOpen={openSheet}
-        foodSelected={setSelectedFood}
-        foodPriceSelected={setSelectedFoodPrice}
+        foodNameSelected={setSelectedFood}
+        // foodPictureSelected={setSelectedFoodImage}
         disappearNavigator={setSendDisappearNavigatorSinal}
+        nameOfResturant={getNameOfResturant}
         />
-        
+         */}
 
         {/* Gray overlay behind sheet */}
         {isOpen && (
@@ -88,8 +145,11 @@ export default function MakeOrder({moveDisappearNavigatorSignal}) {
           handleComponent={null}             // remove the handle itself
           // backgroundStyle={styles.bottomSheetContainer}
           onChange={(index) => setIsOpen(index !== -1)} // track open/close
-          onClose={()=>{setSendDisappearNavigatorSinal(false);
+          onClose={()=>{
             setChecked({});
+            setActivateSheetManually(false);
+            setIsOpen(false); // make sure this is reset
+            onCloseCallback?.(); // new prop from parent
           }}
           style={styles.bottomSheetContainer}
         >
@@ -98,7 +158,7 @@ export default function MakeOrder({moveDisappearNavigatorSignal}) {
           <View>
 
             <Image 
-            source={require("../assets/images/oilrice.jpg")}
+            source={{uri:selectedFoodImage}}
             style={styles.image}
             />
 
@@ -153,18 +213,28 @@ export default function MakeOrder({moveDisappearNavigatorSignal}) {
                 
             )}            
             />
-            <View style={styles.priceDisplayContainer}>
+            {/* <View style={styles.priceDisplayContainer}>
               <View style={styles.cediContainer}>
                 <Text style={styles.priceTag}>
-                  GH₵ {totalPrice === 0 ? selectedFoodPrice: totalPrice}
+                  GH₵ {totalPrice ?? getFoodPrice ?? 0}
                 </Text>
               </View>
               <TouchableOpacity style={styles.addToOrderContainer}>
                 <Text style={styles.addToOrder}>ADD TO ORDER</Text>
               </TouchableOpacity>
-            </View>            
+            </View>             */}
           </View>
         </BottomSheet>
+              <View style={styles.priceDisplayContainer}>
+              <View style={styles.cediContainer}>
+                <Text style={styles.priceTag}>
+                  GH₵ {totalPrice ?? getFoodPrice ?? 0}
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.addToOrderContainer}>
+                <Text style={styles.addToOrder}>ADD TO ORDER</Text>
+              </TouchableOpacity>
+            </View>
       </View>
     </GestureHandlerRootView>
   );
@@ -213,9 +283,10 @@ const styles = StyleSheet.create({
   },
   priceDisplayContainer:{
     flexDirection: "row",
+    flex:1,
     backgroundColor: "white",
     position: "absolute",
-    bottom: 130,
+    bottom: 0,
     height: 70,
     width:"100%",
     elevation: 15,
