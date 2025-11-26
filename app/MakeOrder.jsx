@@ -1,8 +1,10 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import BottomSheet from "@gorhom/bottom-sheet";
+import { getDatabase, push, ref } from "firebase/database";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { FlatList, GestureHandlerRootView } from "react-native-gesture-handler";
+import { FlatList, Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
 
 export default function MakeOrder({moveDisappearNavigatorSignal, getNameOfResturant, autoOpenFood, manuallyOpenFood, getFoodPrice, getRestaurantDataTransfer, onCloseCallback, getImage}) {
     const [list, setList] = useState();
@@ -13,12 +15,17 @@ export default function MakeOrder({moveDisappearNavigatorSignal, getNameOfRestur
     const [selectedFoodPrice, setSelectedFoodPrice] = useState(0);
     const [selectedFoodImage, setSelectedFoodImage] = useState();
     const [activateSheetManually, setActivateSheetManually] = useState(null);
+    const [foodOfAutoOpen, setFoodForAutoOpen] = useState(null);
     const [resturantFullData, setResturantFullData] = useState([]);
+
+    const db = getDatabase();
+
 
 
     const [checked, setChecked] = useState({});
 
     // const [sendDisappearNavigatorSignal, setSendDisappearNavigatorSinal] = useState(false);
+        console.log(`eeee: ${getRestaurantDataTransfer}`)
 
     const toggleCheckbox = (id) => {
     setChecked((prev) => ({
@@ -31,7 +38,12 @@ export default function MakeOrder({moveDisappearNavigatorSignal, getNameOfRestur
           setActivateSheetManually(manuallyOpenFood)
     },[manuallyOpenFood])
 
+    useEffect(() => {
+          setFoodForAutoOpen(autoOpenFood)
+    },[autoOpenFood])
+
       useEffect(() => {
+        console.log(`eeee: ${getRestaurantDataTransfer}`)
           setResturantFullData(getRestaurantDataTransfer)
     },[getRestaurantDataTransfer])
 
@@ -46,13 +58,27 @@ export default function MakeOrder({moveDisappearNavigatorSignal, getNameOfRestur
   console.log(`confirm: ${activateSheetManually}`)
 
   useEffect(() => {
-    if (autoOpenFood || activateSheetManually) {
+    if (foodOfAutoOpen || activateSheetManually) {
       // wait briefly so components mount first
       setTimeout(() => {
         openSheet(); // 👈 automatically open bottom sheet
       }, 300);
     }
-  }, [autoOpenFood, activateSheetManually]);
+  }, [foodOfAutoOpen, activateSheetManually]);
+
+
+  
+  const submitOrder = () => {
+
+    push(ref(db, "buyer-profiles/Foster Ametepey-242424/purchases"),{
+      foodName: activateSheetManually || foodOfAutoOpen,
+      price: totalPrice,
+      image: "photo"
+    })
+
+  }
+
+  
 
 // useEffect(() => {
 //   setTimeout(() => {
@@ -76,10 +102,10 @@ export default function MakeOrder({moveDisappearNavigatorSignal, getNameOfRestur
 
   //   setList(fetchedList);
   // },[])
-      console.log(`yyyyy ${autoOpenFood}`)
-      console.log(` bbbb ${resturantFullData.activateSheetManually}`)
+      console.log(`yyyyy ${getRestaurantDataTransfer}`)
+      console.log(` bbbb ${manuallyOpenFood}`)
       useEffect(() => {
-        const selectedFood = activateSheetManually || autoOpenFood;
+        const selectedFood = activateSheetManually || foodOfAutoOpen;
 
         if (selectedFood && Array.isArray(resturantFullData)) {
           const match = resturantFullData.find(item => item[selectedFood]);
@@ -96,7 +122,7 @@ export default function MakeOrder({moveDisappearNavigatorSignal, getNameOfRestur
             console.log("No match found");
           }
         }
-      }, [resturantFullData, activateSheetManually, autoOpenFood]);
+      }, [resturantFullData, activateSheetManually, foodOfAutoOpen]);
 
 
 
@@ -231,7 +257,9 @@ export default function MakeOrder({moveDisappearNavigatorSignal, getNameOfRestur
                   GH₵ {totalPrice ?? getFoodPrice ?? 0}
                 </Text>
               </View>
-              <TouchableOpacity style={styles.addToOrderContainer}>
+              <TouchableOpacity 
+              onPress={()=>submitOrder()}
+              style={styles.addToOrderContainer}>
                 <Text style={styles.addToOrder}>ADD TO ORDER</Text>
               </TouchableOpacity>
             </View>

@@ -6,7 +6,7 @@ import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from "react-nati
 const navWidth = Dimensions.get("window").width;
 const navHeight = Dimensions.get("window").height;
 
-export default function Navigation(){
+export default function Navigation({goToHome, goToSearch, goToPurchases, goToProfile}){
 
     const [active, setActive] = React.useState("home")
  
@@ -16,7 +16,9 @@ export default function Navigation(){
         <View style={styles.container}>
             <TouchableOpacity
              style={[styles.btn, active === "home" && styles.btnPressed]}
-             onPress={()=>setActive("home")}>
+             onPress={()=>{setActive("home")
+                goToHome("home")
+             }}>
                 <Ionicons name={active === "home" ? "home" : "home-outline"} size={24} color={active === "home" ? "rgba(32, 93, 63, 1)" : "black"} />
                 <Text style={[{fontFamily:"Poppins_500Medium"}, active === "home" && styles.textPressed]}>Home</Text>
             </TouchableOpacity>
@@ -29,10 +31,12 @@ export default function Navigation(){
             </TouchableOpacity>
 
             <TouchableOpacity 
-            style={[styles.btn, active === "cart" && styles.btnPressed]}
-            onPress={()=>setActive("cart")}>
-                <Ionicons name={active === "cart" ? "cart" : "cart-outline"} size={24} color={active === "cart" ? "rgba(32, 93, 63, 1)" : "black"} />
-                <Text style={[{fontFamily:"Poppins_500Medium"}, active === "cart" && styles.textPressed]}>Cart</Text>
+            style={[styles.btn, active === "receipt" && styles.btnPressed]}
+            onPress={()=>{setActive("receipt");
+                goToPurchases("receipt")
+            }}>
+                <Ionicons name={active === "receipt" ? "receipt" : "receipt-outline"} size={24} color={active === "receipt" ? "rgba(32, 93, 63, 1)" : "black"} />
+                <Text style={[{fontFamily:"Poppins_500Medium"}, active === "receipt" && styles.textPressed]}>Purchases</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
