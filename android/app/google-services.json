@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "365899462053",
+    "firebase_url": "https://unimart-4970b-default-rtdb.firebaseio.com",
+    "project_id": "unimart-4970b",
+    "storage_bucket": "unimart-4970b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:365899462053:android:495a753b37b74f56bb244c",
+        "android_client_info": {
+          "package_name": "com.terotech.unimart"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "365899462053-mr0sc9cs074oflamkvctt9pkdbs5cvku.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXRamGKhwMh94w9XHZi__4tCGhPct7gkA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "365899462053-f9hrpqc10o7fqeq4cjfd62m667t7b2rr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
