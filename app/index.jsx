@@ -7,6 +7,7 @@ import ResturantContent from "./ResturantContent.jsx";
 import ShopContent from "./ShopContent.jsx";
 import ShopDisplay from "./ShopDisplay.jsx";
 import Purchases from "./Purchases.jsx";
+import LoginSignup from "./LoginSignup.jsx";
 
 export default function Index() {
   const [activeNavigator, setActiveNavigator] = useState(false);
@@ -96,138 +97,145 @@ useEffect(() => {
 
 
 
-  return (
+  // return (
     
-    <>
-      {page === "receipt" ? 
-        (
-        <View
-        style={{
-          flex: 1,
-          // justifyContent: "center",
-          // alignItems: "center",
-          backgroundColor: "white",
-          position: "absolute",
-          width: "100%",
-          height: "100%",
-          paddingTop: 80,
-        }}  
-        >
-        <Purchases/>
-        {/* <Navigation 
-        goToPurchases={setPage}
-        goToHome={setPage}
-        /> */}
-        </View>) 
-        : page === "home" ? 
-        (<View
-        style={{
-          flex: 1,
-          // justifyContent: "center",
-          // alignItems: "center",
-          backgroundColor: "white",
-          position: "absolute",
-          width: "100%",
-          height: "100%",
-          paddingTop: !shopData && !restaurantData && !restaurantData2 ? 80 : 0,
-        }}
-      >
-        {((!shopData && !restaurantData && !restaurantData2) && page==="home") && (
-          <View style={styles.toggleContainer}>
-            <Animated.View style={[styles.slider, { transform: [{ translateX }] }]} />
-            <TouchableOpacity style={styles.toggleSide} onPress={() => !switchToShop && toggleRole(true)}>
-              <Text style={[styles.toggleText, switchToShop && styles.activeText]}>Resturants</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.toggleSide} onPress={() => switchToShop && toggleRole(false)}>
-              <Text style={[styles.toggleText, !switchToShop && styles.activeText]}>Shops</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+  //   <>
+  //     {page === "receipt" ? 
+  //       (
+  //       <View
+  //       style={{
+  //         flex: 1,
+  //         // justifyContent: "center",
+  //         // alignItems: "center",
+  //         backgroundColor: "white",
+  //         position: "absolute",
+  //         width: "100%",
+  //         height: "100%",
+  //         paddingTop: 80,
+  //       }}  
+  //       >
+  //       <Purchases/>
+  //       {/* <Navigation 
+  //       goToPurchases={setPage}
+  //       goToHome={setPage}
+  //       /> */}
+  //       </View>) 
+  //       : page === "home" ? 
+  //       (<View
+  //       style={{
+  //         flex: 1,
+  //         // justifyContent: "center",
+  //         // alignItems: "center",
+  //         backgroundColor: "white",
+  //         position: "absolute",
+  //         width: "100%",
+  //         height: "100%",
+  //         paddingTop: !shopData && !restaurantData && !restaurantData2 ? 80 : 0,
+  //       }}
+  //     >
+  //       {((!shopData && !restaurantData && !restaurantData2) && page==="home") && (
+  //         <View style={styles.toggleContainer}>
+  //           <Animated.View style={[styles.slider, { transform: [{ translateX }] }]} />
+  //           <TouchableOpacity style={styles.toggleSide} onPress={() => !switchToShop && toggleRole(true)}>
+  //             <Text style={[styles.toggleText, switchToShop && styles.activeText]}>Resturants</Text>
+  //           </TouchableOpacity>
+  //           <TouchableOpacity style={styles.toggleSide} onPress={() => switchToShop && toggleRole(false)}>
+  //             <Text style={[styles.toggleText, !switchToShop && styles.activeText]}>Shops</Text>
+  //           </TouchableOpacity>
+  //         </View>
+  //       )}
 
-        {(restaurantData2 !== null || restaurantData !== null) && (
-          <ResturantContent 
-            nameOfResturant2={restaurantData2}
-            setRestaurantDataTransfer={setRestaurantAllDetails}
-            disappearNavigator={setActiveNavigator}
-            manuallyOpenSheet={setOnOpenBottomSheet}
-            getNameOfResturant={restaurantData?.resturant}
-            getNameOfResturant2={restaurantData2}
-            sendPrice={setPriceofFood}
-            sendImage={setBottomSheetImage}
-          />
-        )}
-
-
-        {switchToShop ? (
-          restaurantData === null && (
-            <FoodDisplay
-              nameOfResturant={setRestaurantData}
-              nameOfResturant2={setRestaurantData2}
-            />
-          )
-        ) : (
-          !shopData && <ShopDisplay nameOfShop={setShopData} />
-        )}
-
-        {shopData && (
-          <ShopContent
-            getShopName={shopData}
-            manuallyOpenSheet={setOnOpenBottomSheet}
-            disappearNavigator={setActiveNavigator}
-            sendImage={setBottomSheetImage}
-            setShopDataTransfer={setShopAllDetails}
-          />
-        )}
-
-        {/* <Navigation 
-        goToPurchases={setPage}
-        goToHome={setPage}
-        /> */}
-
-      </View>) : null}
-
-      {showSheet && (
-        <MakeOrder 
-          getNameOfResturant={restaurantData?.resturant || restaurantData2}
-          autoOpenFood={restaurantData?.autoOpenFood}
-          getFoodPrice={restaurantData?.foodPrice || priceOfFood}
-          manuallyOpenFood={onOpenBottomSheet}
-          onCloseCallback={() => {
-            setShowSheet(false);
-            setOnOpenBottomSheet(false);
-          }}
-          getRestaurantDataTransfer={switchToShop ? resturantAllDetails : shopAllDetails}
-          getImage={bottomSheetImage}
-        />
-      )}
-
-        <Navigation 
-        goToPurchases={setPage}
-        goToHome={setPage}
-        />
+  //       {(restaurantData2 !== null || restaurantData !== null) && (
+  //         <ResturantContent 
+  //           nameOfResturant2={restaurantData2}
+  //           setRestaurantDataTransfer={setRestaurantAllDetails}
+  //           disappearNavigator={setActiveNavigator}
+  //           manuallyOpenSheet={setOnOpenBottomSheet}
+  //           getNameOfResturant={restaurantData?.resturant}
+  //           getNameOfResturant2={restaurantData2}
+  //           sendPrice={setPriceofFood}
+  //           sendImage={setBottomSheetImage}
+  //         />
+  //       )}
 
 
-        {/* {page ? 
-        (<Purchases/>) 
-        : 
-        (switchToShop ? (
-          restaurantData === null && (
-            <FoodDisplay
-              nameOfResturant={setRestaurantData}
-              nameOfResturant2={setRestaurantData2}
-            />
-          )
-        ) : (
-          !shopData && (
-          <>
-          <ShopDisplay nameOfShop={setShopData} /> 
-                    <MakeOrder/>
-                    </>
-                    )
-        )) } */}
+  //       {switchToShop ? (
+  //         restaurantData === null && (
+  //           <FoodDisplay
+  //             nameOfResturant={setRestaurantData}
+  //             nameOfResturant2={setRestaurantData2}
+  //           />
+  //         )
+  //       ) : (
+  //         !shopData && <ShopDisplay nameOfShop={setShopData} />
+  //       )}
 
-    </>
-  );
+  //       {shopData && (
+  //         <ShopContent
+  //           getShopName={shopData}
+  //           manuallyOpenSheet={setOnOpenBottomSheet}
+  //           disappearNavigator={setActiveNavigator}
+  //           sendImage={setBottomSheetImage}
+  //           setShopDataTransfer={setShopAllDetails}
+  //         />
+  //       )}
+
+  //       {/* <Navigation 
+  //       goToPurchases={setPage}
+  //       goToHome={setPage}
+  //       /> */}
+
+  //     </View>) : null}
+
+  //     {showSheet && (
+  //       <MakeOrder 
+  //         getNameOfResturant={restaurantData?.resturant || restaurantData2}
+  //         autoOpenFood={restaurantData?.autoOpenFood}
+  //         getFoodPrice={restaurantData?.foodPrice || priceOfFood}
+  //         manuallyOpenFood={onOpenBottomSheet}
+  //         onCloseCallback={() => {
+  //           setShowSheet(false);
+  //           setOnOpenBottomSheet(false);
+  //         }}
+  //         getRestaurantDataTransfer={switchToShop ? resturantAllDetails : shopAllDetails}
+  //         getImage={bottomSheetImage}
+  //       />
+  //     )}
+
+  //       <Navigation 
+  //       goToPurchases={setPage}
+  //       goToHome={setPage}
+  //       />
+
+
+  //       {/* {page ? 
+  //       (<Purchases/>) 
+  //       : 
+  //       (switchToShop ? (
+  //         restaurantData === null && (
+  //           <FoodDisplay
+  //             nameOfResturant={setRestaurantData}
+  //             nameOfResturant2={setRestaurantData2}
+  //           />
+  //         )
+  //       ) : (
+  //         !shopData && (
+  //         <>
+  //         <ShopDisplay nameOfShop={setShopData} /> 
+  //                   <MakeOrder/>
+  //                   </>
+  //                   )
+  //       )) } */}
+
+  //   </>
+  // );
+
+  return(
+
+      <LoginSignup/>
+
+  )
+
 }
 
 const styles = StyleSheet.create({
