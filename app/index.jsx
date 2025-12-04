@@ -8,6 +8,7 @@ import ShopContent from "./ShopContent.jsx";
 import ShopDisplay from "./ShopDisplay.jsx";
 import Purchases from "./Purchases.jsx";
 import LoginSignup from "./LoginSignup.jsx";
+import FaceScanner from "./FaceScanner.jsx";
 
 export default function Index() {
   const [activeNavigator, setActiveNavigator] = useState(false);
@@ -232,7 +233,8 @@ useEffect(() => {
 
   return(
 
-      <LoginSignup/>
+      // <LoginSignup/>
+      <FaceScanner/>
 
   )
 
