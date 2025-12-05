@@ -1,21 +1,25 @@
-import { useEffect, useState,useRef } from "react";
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View, TextInput, Image, Animated} from "react-native";
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { auth } from "./firebaseConfig";
-import { signInWithEmailAndPassword, 
-        createUserWithEmailAndPassword, 
-        GoogleAuthProvider, 
-        signInWithCredential,
-        fetchSignInMethodsForEmail,
-        sendPasswordResetEmail,
-        } from "firebase/auth";
 import Foundation from '@expo/vector-icons/Foundation';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import {
+    createUserWithEmailAndPassword,
+    GoogleAuthProvider,
+    sendPasswordResetEmail,
+    signInWithCredential,
+    signInWithEmailAndPassword
+} from "firebase/auth";
+import { getDatabase, onValue, ref, set } from "firebase/database";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Animated, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { auth } from "./firebaseConfig";
+import { app } from "./firebaseConfig.js"; // your firebaseConfig file
 
 
 
-export default function LoginSignup(){
+
+
+export default function LoginSignup({sendCameraSignal, sendProfile}){
 
 
     const [email, setEmail] = useState("");
@@ -30,13 +34,14 @@ export default function LoginSignup(){
     const [forgottenActivate, setForgottenActivate] = useState(false);
     const [retrievalEmail, setRetrievalEmail] = useState(false);
     const [isforgottenEmailSent, setIsForgottenEmailSent] = useState(false);
+    const [fullySignedUp, setFullySignedUp] = useState(null);
 
 
 
     // Configure Google Sign-In
     GoogleSignin.configure({
-    webClientId: "365899462053-dn4jfb818anng6he8p5ef472tsl8e0r6.apps.googleusercontent.com", // Firebase Web client ID
     offlineAccess: true,
+    webClientId: '365899462053-76aqoo03urj1m4gbnekmj5opm02pnlpt.apps.googleusercontent.com',
     });
 
 
@@ -47,6 +52,41 @@ export default function LoginSignup(){
     const isShort =  password.length >= 1 && password.length <= 7;
     const isMedium = password.length >= 8 && password.length <= 11;
     const isLong = password.length >= 12;
+
+    const db = getDatabase(app);
+    
+    useEffect(() => {
+    if (!email) return; // Only run when email is typed
+
+    const safeEmail = email.replace(/\./g, ','); 
+    const userRef = ref(db, `buyer-profiles/${safeEmail}/credentials`);
+
+    const unsubscribe = onValue(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+        const creds = snapshot.val();
+
+        if (
+            !creds ||
+            !creds.indexNumber ||
+            !creds.referenceNumber ||
+            creds.indexNumber.trim() === "" ||
+            creds.referenceNumber.trim() === ""
+        ) {
+            console.log("Credential is empty");
+            setFullySignedUp(false);
+        } else {
+            console.log("Credential exists:", creds);
+            setFullySignedUp(true);
+        }
+
+        } else {
+        console.log("User or credential field does not exist");
+        setFullySignedUp(false);
+        }
+    });
+
+    return () => unsubscribe(); // cleanup listener when email changes
+    }, [email]); // run whenever user types an email
 
 
     useEffect(()=>{
@@ -124,13 +164,28 @@ export default function LoginSignup(){
 
         // ✅ Optional: show success message
         
-        if(isNewUser){
+        if(isNewUser && fullySignedUp===null){
             setVisible(true);
             setFeedBack('newGoogleSignUp'); // or 'newGoogleSignUp' if you prefer
+            set(ref(db, `buyer-profiles/${firebaseUser.user.email.replace('.', ',')}`), {
+            purchases: [{foodName: "", image: "", price: ""}],
+            credentials: {indexNumber: "", referenceNumber: ""}
+            });
+            console.log("nnnnnnnnnnnnnnnnnn")
+            sendCameraSignal(true);
+            sendProfile(firebaseUser.user.email)
         }
         else{
             setVisible(true);
             setFeedBack("googleAlreadyExists")
+
+            if(fullySignedUp === false){
+                sendCameraSignal(true);
+                sendProfile(firebaseUser.user.email)
+            console.log("vvvvvvvvvvvvvvvvvvvvvvvv")
+
+            }
+
         }
 
     } catch (error) {
@@ -181,25 +236,44 @@ export default function LoginSignup(){
 
         }
         signup ? (
+            
             createUserWithEmailAndPassword(auth, email, password)
             .then(()=>{
-                setVisible(true);
-                setFeedBack("accountCreated");
-                console.log("Account Created");
-                setLoading(false);
+                    setVisible(true);
+                    setFeedBack("accountCreated");
+                    console.log("Account Created");
+                    setLoading(false);
+                    set(ref(db, `buyer-profiles/${email.replace('.', ',')}`), {
+                    purchases: [{foodName: "", image: "", price: ""}],
+                    credentials: {indexNumber: "", referenceNumber: ""}
+                    });
+                    sendCameraSignal(true);
+                    sendProfile(email);
             })
             .catch((err)=>{
                 setVisible(true);
-                setFeedBack("accountNotCreated");
-                console.log(`🚫 Error: ${err}`);
                 setLoading(false);
+
+                if(err.code === "auth/email-already-in-use"){
+                    setFeedBack("emailAlreadyRegistered");
+                    console.log("Email is already in use");
+                } else {
+                    setFeedBack("accountNotCreated");
+                    console.log(`🚫 Error: ${err.message}`);
+                }
+                
             })
+            
         
         )
         :
         (
             signInWithEmailAndPassword(auth, email, password)
             .then(()=>{
+                if(fullySignedUp === false){
+                    sendCameraSignal(true);
+                    sendProfile(email);
+                }
                 setFeedBack("correctLogs");
                 setVisible(true);
                 console.log("🎉🎉 Logged in");
@@ -243,6 +317,7 @@ export default function LoginSignup(){
                     : feedback === "newGoogleSignUp" ? "Account created successfully"
                     : feedback === "googleAlreadyExists" ? "Logged in successfully"
                     : feedback === "passwordResetLinkSent" ? "Password reset not successful"
+                    : feedback === "emailAlreadyRegistered" ? "Account already exists"
                     : null}
                 </Text>
             {/* </View> */}
@@ -340,7 +415,7 @@ export default function LoginSignup(){
                         </View>)
                         :
                         (
-                        <Text style={styles.signinText}>Sign in</Text>)
+                        <Text style={styles.signinText}>Sign up</Text>)
                         }
                     </TouchableOpacity>
 
@@ -349,7 +424,7 @@ export default function LoginSignup(){
                 </View>
 
                 <View  style={[styles.altSiginTextContainer, {marginTop: signup ? 442 : null}]}>
-                    <Text style={styles.altSigninText}>Or sign in with</Text>
+                    <Text style={styles.altSigninText}>Or sign up with</Text>
                 </View>
 
                 <View style={[styles.googleContainer, {marginTop: signup ? 35 : null}]}>
@@ -563,9 +638,12 @@ const styles = StyleSheet.create({
         color:"#8e8989"
     },
     inputContainer:{
+        
         position: "absolute",
-        left: 30,
+        // left: 30,
         marginTop: 100,
+        alignItems: "center",
+        // justifyContent: "center",
         
     },
     input:{

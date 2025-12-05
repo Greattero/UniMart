@@ -24,6 +24,8 @@ export default function Index() {
   const [shopData,setShopData] = useState(null);
   const [page, setPage] = useState("home");
   const anim = useRef(new Animated.Value(0)).current;
+  const [cameraSignal, setCameraSignal] = useState(false);
+  const [profile, setProfile] = useState("")
 
   // Toggle role with animation
   const toggleRole = (targetShop) => {
@@ -232,9 +234,14 @@ useEffect(() => {
   // );
 
   return(
+    <>
+{       !cameraSignal &&   <LoginSignup
+          sendCameraSignal={setCameraSignal}
+          sendProfile={setProfile}
+          />}
+          {(cameraSignal && profile) ? <FaceScanner getProfile={profile} setMount={setCameraSignal}/> : null}
 
-      // <LoginSignup/>
-      <FaceScanner/>
+      </>
 
   )
 

@@ -12,6 +12,7 @@
       "supportsTablet": true
     },
     "android": {
+      "permissions": ["CAMERA", "WRITE_EXTERNAL_STORAGE", "READ_EXTERNAL_STORAGE"],
       "package": "com.terotech.unimart",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -51,9 +52,14 @@
           }
         }
       ],
-      "@react-native-google-signin/google-signin",
       "@react-native-firebase/app",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "react-native-vision-camera",
+        {
+          "enableFileAccess": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
