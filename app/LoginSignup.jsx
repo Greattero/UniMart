@@ -19,7 +19,7 @@ import { app } from "./firebaseConfig.js"; // your firebaseConfig file
 
 
 
-export default function LoginSignup({sendCameraSignal, sendProfile}){
+export default function LoginSignup({sendCameraSignal, sendProfile, setLogger}){
 
 
     const [email, setEmail] = useState("");
@@ -169,21 +169,24 @@ export default function LoginSignup({sendCameraSignal, sendProfile}){
             setFeedBack('newGoogleSignUp'); // or 'newGoogleSignUp' if you prefer
             set(ref(db, `buyer-profiles/${firebaseUser.user.email.replace('.', ',')}`), {
             purchases: [{foodName: "", image: "", price: ""}],
-            credentials: {indexNumber: "", referenceNumber: ""}
+            credentials: {indexNumber: "", referenceNumber: ""},
             });
             console.log("nnnnnnnnnnnnnnnnnn")
             sendCameraSignal(true);
             sendProfile(firebaseUser.user.email)
         }
         else{
-            setVisible(true);
-            setFeedBack("googleAlreadyExists")
-
+            // setVisible(true);
+            // setFeedBack("googleAlreadyExists");
             if(fullySignedUp === false){
                 sendCameraSignal(true);
                 sendProfile(firebaseUser.user.email)
-            console.log("vvvvvvvvvvvvvvvvvvvvvvvv")
-
+                console.log("vvvvvvvvvvvvvvvvvvvvvvvv")
+            }
+            else{
+            setVisible(true);
+            setFeedBack("googleAlreadyExists");
+            setLogger(true);
             }
 
         }
@@ -245,7 +248,7 @@ export default function LoginSignup({sendCameraSignal, sendProfile}){
                     setLoading(false);
                     set(ref(db, `buyer-profiles/${email.replace('.', ',')}`), {
                     purchases: [{foodName: "", image: "", price: ""}],
-                    credentials: {indexNumber: "", referenceNumber: ""}
+                    credentials: {indexNumber: "", referenceNumber: ""},
                     });
                     sendCameraSignal(true);
                     sendProfile(email);
@@ -274,10 +277,17 @@ export default function LoginSignup({sendCameraSignal, sendProfile}){
                     sendCameraSignal(true);
                     sendProfile(email);
                 }
-                setFeedBack("correctLogs");
-                setVisible(true);
-                console.log("🎉🎉 Logged in");
-                setLoading(false);
+                else{
+                    setFeedBack("correctLogs");
+                    setVisible(true);
+                    console.log("🎉🎉 Logged in");
+                    setLogger(true)
+                    setLoading(false);
+                }
+                // setFeedBack("correctLogs");
+                // setVisible(true);
+                // console.log("🎉🎉 Logged in");
+                // setLoading(false);
             })
             .catch((err)=>{
                 setFeedBack("wrongLogs");
@@ -367,7 +377,7 @@ export default function LoginSignup({sendCameraSignal, sendProfile}){
                     placeholder="E-mail address"
                     placeholderTextColor="gray"
                     style={styles.input}
-                    value={email}
+                    value={email?.toLowerCase()}
                     onChangeText={setEmail}
                     keyboardType="email-address"
                     />
@@ -455,7 +465,7 @@ export default function LoginSignup({sendCameraSignal, sendProfile}){
                     placeholder="E-mail address"
                     placeholderTextColor="gray"
                     style={styles.input}
-                    value={email}
+                    value={email?.toLowerCase()}
                     onChangeText={setEmail}
                     keyboardType="email-address"
                     />
@@ -474,8 +484,9 @@ export default function LoginSignup({sendCameraSignal, sendProfile}){
                     <TouchableOpacity
                     style={styles.signinContainer}
                     onPress={()=>handleSubmit()}
+                    disabled={fullySignedUp===null}
                     >
-                        {loading ? 
+                        {loading  ? 
                         
                        (<View>
                             <ActivityIndicator color={"white"} size={28}/>

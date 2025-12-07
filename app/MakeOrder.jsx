@@ -6,7 +6,7 @@ import { FlatList, Image, Pressable, StyleSheet, Text, TouchableOpacity, View } 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 
-export default function MakeOrder({moveDisappearNavigatorSignal, getNameOfResturant, autoOpenFood, manuallyOpenFood, getFoodPrice, getRestaurantDataTransfer, onCloseCallback, getImage}) {
+export default function MakeOrder({disappearNavigator, getNameOfResturant, autoOpenFood, manuallyOpenFood, getFoodPrice, getRestaurantDataTransfer, onCloseCallback, getImage}) {
     const [list, setList] = useState();
     const sheetRef = useRef(null);
     const snapPoints = useMemo(() => ["85%"], []);
@@ -73,7 +73,8 @@ export default function MakeOrder({moveDisappearNavigatorSignal, getNameOfRestur
     push(ref(db, "buyer-profiles/Foster Ametepey-242424/purchases"),{
       foodName: activateSheetManually || foodOfAutoOpen,
       price: totalPrice,
-      image: "photo"
+      image: "photo",
+      status: "incomplete"
     })
 
   }
@@ -345,7 +346,7 @@ const styles = StyleSheet.create({
 
   },
   addToOrderContainer:{
-    marginLeft:65,
+    marginLeft:95,
     marginTop: 12,
     height: 40,
     width: 150, 

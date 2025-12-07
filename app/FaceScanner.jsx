@@ -6,11 +6,11 @@ import { Camera, useCameraDevice, useCameraPermission } from "react-native-visio
 import { app } from "./firebaseConfig.js"; // your firebaseConfig file
 
 
-export default function FaceScanner({getProfile,setMount}){
+export default function FaceScanner({getProfile,setMount, setLogger}){
 
     // ... (rest of your state and useEffect hooks) ...
     const camera = useRef(null);
-    const device = useCameraDevice('back')
+    const device = useCameraDevice('front')
     const { hasPermission, requestPermission } = useCameraPermission() // Added requestPermission
     const [loading, setLoading] = useState(false);
 
@@ -107,6 +107,7 @@ const captureAndExtract = async () => {
     .then(() => {
       console.log("Index and Ref No stored in credential array successfully");
       setMount(false);
+      setLogger(true);
     })
     .catch((err) => {
       console.error("Error storing credentials:", err);

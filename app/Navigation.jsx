@@ -1,14 +1,19 @@
 import { Ionicons } from "@expo/vector-icons"; // ✅ correct import
-import React from "react";
+import React, { useEffect } from "react";
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 
 const navWidth = Dimensions.get("window").width;
 const navHeight = Dimensions.get("window").height;
 
-export default function Navigation({goToHome, goToSearch, goToPurchases, goToProfile}){
+export default function Navigation({goToHome, goToSearch, goToPurchases, goToProfile, showRedDot}){
 
-    const [active, setActive] = React.useState("home")
+    const [active, setActive] = React.useState("home");
+    const [redDot, setRedDot] = React.useState(false);
+
+    useEffect(()=>{
+        setRedDot(showRedDot);
+    },[showRedDot])
  
     
     
@@ -35,7 +40,14 @@ export default function Navigation({goToHome, goToSearch, goToPurchases, goToPro
             onPress={()=>{setActive("receipt");
                 goToPurchases("receipt")
             }}>
-                <Ionicons name={active === "receipt" ? "receipt" : "receipt-outline"} size={24} color={active === "receipt" ? "rgba(32, 93, 63, 1)" : "black"} />
+                {redDot === true &&<View style={styles.uncompletedOrderNotification}>
+                </View>}
+                <Ionicons 
+                name={active === "receipt" ? "receipt" : "receipt-outline"} 
+                size={24} 
+                color={active === "receipt" ? "rgba(32, 93, 63, 1)" : "black"}
+                style={{marginTop:6}}
+                 />
                 <Text style={[{fontFamily:"Poppins_500Medium"}, active === "receipt" && styles.textPressed]}>Purchases</Text>
             </TouchableOpacity>
 
@@ -73,12 +85,26 @@ const styles = StyleSheet.create({
         backgroundColor:"rgba(70, 180, 127, 0.28)",
         borderRadius:12,
         width:70,
+        height:55,
     },
 
     textPressed:{
         fontWeight:"bold",
         color: "rgba(32, 93, 63, 1)",
         fontFamily: "Poppins_500Medium",
+        marginTop: 0,
+    },
+    uncompletedOrderNotification:{
+        // borderColor: "red",
+        borderWidth: 1,
+        borderColor: "red",
+        borderRadius: 50,
+        position: "absolute",
+        right: -2,
+        top:-3,
+        height: 12,
+        width: 12,
+        backgroundColor: "red",
     }
 
 })

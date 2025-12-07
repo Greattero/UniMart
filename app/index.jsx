@@ -11,7 +11,7 @@ import LoginSignup from "./LoginSignup.jsx";
 import FaceScanner from "./FaceScanner.jsx";
 
 export default function Index() {
-  const [activeNavigator, setActiveNavigator] = useState(false);
+  const [inactiveNavigator, setInactiveNavigator] = useState(false);
   const [restaurantData, setRestaurantData] = useState(null);
   const [restaurantData2, setRestaurantData2] = useState(null);
   const [resturantAllDetails, setRestaurantAllDetails] = useState([]);
@@ -25,7 +25,9 @@ export default function Index() {
   const [page, setPage] = useState("home");
   const anim = useRef(new Animated.Value(0)).current;
   const [cameraSignal, setCameraSignal] = useState(false);
-  const [profile, setProfile] = useState("")
+  const [profile, setProfile] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isNotify, setIsNotify] = useState(false);
 
   // Toggle role with animation
   const toggleRole = (targetShop) => {
@@ -100,150 +102,161 @@ useEffect(() => {
 
 
 
-  // return (
+  return (
     
-  //   <>
-  //     {page === "receipt" ? 
-  //       (
-  //       <View
-  //       style={{
-  //         flex: 1,
-  //         // justifyContent: "center",
-  //         // alignItems: "center",
-  //         backgroundColor: "white",
-  //         position: "absolute",
-  //         width: "100%",
-  //         height: "100%",
-  //         paddingTop: 80,
-  //       }}  
-  //       >
-  //       <Purchases/>
-  //       {/* <Navigation 
-  //       goToPurchases={setPage}
-  //       goToHome={setPage}
-  //       /> */}
-  //       </View>) 
-  //       : page === "home" ? 
-  //       (<View
-  //       style={{
-  //         flex: 1,
-  //         // justifyContent: "center",
-  //         // alignItems: "center",
-  //         backgroundColor: "white",
-  //         position: "absolute",
-  //         width: "100%",
-  //         height: "100%",
-  //         paddingTop: !shopData && !restaurantData && !restaurantData2 ? 80 : 0,
-  //       }}
-  //     >
-  //       {((!shopData && !restaurantData && !restaurantData2) && page==="home") && (
-  //         <View style={styles.toggleContainer}>
-  //           <Animated.View style={[styles.slider, { transform: [{ translateX }] }]} />
-  //           <TouchableOpacity style={styles.toggleSide} onPress={() => !switchToShop && toggleRole(true)}>
-  //             <Text style={[styles.toggleText, switchToShop && styles.activeText]}>Resturants</Text>
-  //           </TouchableOpacity>
-  //           <TouchableOpacity style={styles.toggleSide} onPress={() => switchToShop && toggleRole(false)}>
-  //             <Text style={[styles.toggleText, !switchToShop && styles.activeText]}>Shops</Text>
-  //           </TouchableOpacity>
-  //         </View>
-  //       )}
-
-  //       {(restaurantData2 !== null || restaurantData !== null) && (
-  //         <ResturantContent 
-  //           nameOfResturant2={restaurantData2}
-  //           setRestaurantDataTransfer={setRestaurantAllDetails}
-  //           disappearNavigator={setActiveNavigator}
-  //           manuallyOpenSheet={setOnOpenBottomSheet}
-  //           getNameOfResturant={restaurantData?.resturant}
-  //           getNameOfResturant2={restaurantData2}
-  //           sendPrice={setPriceofFood}
-  //           sendImage={setBottomSheetImage}
-  //         />
-  //       )}
-
-
-  //       {switchToShop ? (
-  //         restaurantData === null && (
-  //           <FoodDisplay
-  //             nameOfResturant={setRestaurantData}
-  //             nameOfResturant2={setRestaurantData2}
-  //           />
-  //         )
-  //       ) : (
-  //         !shopData && <ShopDisplay nameOfShop={setShopData} />
-  //       )}
-
-  //       {shopData && (
-  //         <ShopContent
-  //           getShopName={shopData}
-  //           manuallyOpenSheet={setOnOpenBottomSheet}
-  //           disappearNavigator={setActiveNavigator}
-  //           sendImage={setBottomSheetImage}
-  //           setShopDataTransfer={setShopAllDetails}
-  //         />
-  //       )}
-
-  //       {/* <Navigation 
-  //       goToPurchases={setPage}
-  //       goToHome={setPage}
-  //       /> */}
-
-  //     </View>) : null}
-
-  //     {showSheet && (
-  //       <MakeOrder 
-  //         getNameOfResturant={restaurantData?.resturant || restaurantData2}
-  //         autoOpenFood={restaurantData?.autoOpenFood}
-  //         getFoodPrice={restaurantData?.foodPrice || priceOfFood}
-  //         manuallyOpenFood={onOpenBottomSheet}
-  //         onCloseCallback={() => {
-  //           setShowSheet(false);
-  //           setOnOpenBottomSheet(false);
-  //         }}
-  //         getRestaurantDataTransfer={switchToShop ? resturantAllDetails : shopAllDetails}
-  //         getImage={bottomSheetImage}
-  //       />
-  //     )}
-
-  //       <Navigation 
-  //       goToPurchases={setPage}
-  //       goToHome={setPage}
-  //       />
-
-
-  //       {/* {page ? 
-  //       (<Purchases/>) 
-  //       : 
-  //       (switchToShop ? (
-  //         restaurantData === null && (
-  //           <FoodDisplay
-  //             nameOfResturant={setRestaurantData}
-  //             nameOfResturant2={setRestaurantData2}
-  //           />
-  //         )
-  //       ) : (
-  //         !shopData && (
-  //         <>
-  //         <ShopDisplay nameOfShop={setShopData} /> 
-  //                   <MakeOrder/>
-  //                   </>
-  //                   )
-  //       )) } */}
-
-  //   </>
-  // );
-
-  return(
     <>
-{       !cameraSignal &&   <LoginSignup
+      {isLoggedIn ?
+        <>
+          {page === "receipt" ? 
+            (
+            <View
+            style={{
+              flex: 1,
+              // justifyContent: "center",
+              // alignItems: "center",
+              backgroundColor: "white",
+              position: "absolute",
+              width: "100%",
+              height: "100%",
+              paddingTop: 80,
+            }}  
+            >
+            <Purchases
+            setNotify={setIsNotify}
+            />
+            {/* <Navigation 
+            goToPurchases={setPage}
+            goToHome={setPage}
+            /> */}
+            </View>) 
+            : page === "home" ? 
+            (<View
+            style={{
+              flex: 1,
+              // justifyContent: "center",
+              // alignItems: "center",
+              backgroundColor: "white",
+              position: "absolute",
+              width: "100%",
+              height: "100%",
+              paddingTop: !shopData && !restaurantData && !restaurantData2 ? 80 : 0,
+            }}
+          >
+            {((!shopData && !restaurantData && !restaurantData2) && page==="home") && (
+              <View style={styles.toggleContainer}>
+                <Animated.View style={[styles.slider, { transform: [{ translateX }] }]} />
+                <TouchableOpacity style={styles.toggleSide} onPress={() => !switchToShop && toggleRole(true)}>
+                  <Text style={[styles.toggleText, switchToShop && styles.activeText]}>Resturants</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.toggleSide} onPress={() => switchToShop && toggleRole(false)}>
+                  <Text style={[styles.toggleText, !switchToShop && styles.activeText]}>Shops</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {(restaurantData2 !== null || restaurantData !== null) && (
+              <ResturantContent 
+                nameOfResturant2={restaurantData2}
+                setRestaurantDataTransfer={setRestaurantAllDetails}
+                disappearNavigator={setInactiveNavigator}
+                manuallyOpenSheet={setOnOpenBottomSheet}
+                getNameOfResturant={restaurantData?.resturant}
+                getNameOfResturant2={restaurantData2}
+                sendPrice={setPriceofFood}
+                sendImage={setBottomSheetImage}
+              />
+            )}
+
+
+            {switchToShop ? (
+              restaurantData === null && (
+                <FoodDisplay
+                  nameOfResturant={setRestaurantData}
+                  nameOfResturant2={setRestaurantData2}
+                />
+              )
+            ) : (
+              !shopData && <ShopDisplay nameOfShop={setShopData} />
+            )}
+
+            {shopData && (
+              <ShopContent
+                getShopName={shopData}
+                manuallyOpenSheet={setOnOpenBottomSheet}
+                disappearNavigator={setInactiveNavigator}
+                sendImage={setBottomSheetImage}
+                setShopDataTransfer={setShopAllDetails}
+              />
+            )}
+
+            {/* <Navigation 
+            goToPurchases={setPage}
+            goToHome={setPage}
+            /> */}
+
+          </View>) : null}
+
+          {showSheet && (
+            <MakeOrder 
+              getNameOfResturant={restaurantData?.resturant || restaurantData2}
+              autoOpenFood={restaurantData?.autoOpenFood}
+              getFoodPrice={restaurantData?.foodPrice || priceOfFood}
+              manuallyOpenFood={onOpenBottomSheet}
+              onCloseCallback={() => {
+                setShowSheet(false);
+                setOnOpenBottomSheet(false);
+                setInactiveNavigator(false);
+              }}
+              getRestaurantDataTransfer={switchToShop ? resturantAllDetails : shopAllDetails}
+              getImage={bottomSheetImage}
+            />
+          )}
+
+           { inactiveNavigator === false && <Navigation 
+            goToPurchases={setPage}
+            goToHome={setPage}
+            showRedDot={isNotify}
+            />}
+
+
+            {/* {page ? 
+            (<Purchases/>) 
+            : 
+            (switchToShop ? (
+              restaurantData === null && (
+                <FoodDisplay
+                  nameOfResturant={setRestaurantData}
+                  nameOfResturant2={setRestaurantData2}
+                />
+              )
+            ) : (
+              !shopData && (
+              <>
+              <ShopDisplay nameOfShop={setShopData} /> 
+                        <MakeOrder/>
+                        </>
+                        )
+            )) } */}
+          </>
+
+
+    :
+
+    <>
+      {!cameraSignal &&   <LoginSignup
           sendCameraSignal={setCameraSignal}
           sendProfile={setProfile}
+          setLogger={setIsLoggedIn}               // when you integrate the logout, make sure you handle the setislogged in properly
           />}
-          {(cameraSignal && profile) ? <FaceScanner getProfile={profile} setMount={setCameraSignal}/> : null}
+          {(cameraSignal && profile) ? <FaceScanner getProfile={profile} setMount={setCameraSignal} setLogger={setIsLoggedIn}/> : null}
 
       </>
+}
 
-  )
+    </>
+  );
+
+  
 
 }
 
