@@ -9,6 +9,7 @@ import ShopDisplay from "./ShopDisplay.jsx";
 import Purchases from "./Purchases.jsx";
 import LoginSignup from "./LoginSignup.jsx";
 import FaceScanner from "./FaceScanner.jsx";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Index() {
   const [inactiveNavigator, setInactiveNavigator] = useState(false);
@@ -20,7 +21,7 @@ export default function Index() {
   const [showSheet, setShowSheet] = useState(false);
   const [priceOfFood, setPriceofFood] = useState(null);
   const [bottomSheetImage, setBottomSheetImage] = useState(null);
-  const [switchToShop, setSwitchToShop] = useState(true);
+  const [switchToRestaurant, setSwitchToRestaurant] = useState(true);
   const [shopData,setShopData] = useState(null);
   const [page, setPage] = useState("home");
   const anim = useRef(new Animated.Value(0)).current;
@@ -29,9 +30,11 @@ export default function Index() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isNotify, setIsNotify] = useState(false);
 
+  console.log(`restaurantData`);
+
   // Toggle role with animation
   const toggleRole = (targetShop) => {
-    setSwitchToShop(targetShop);
+    setSwitchToRestaurant(targetShop);
     Animated.timing(anim, {
       toValue: targetShop ? 0 : 1,
       duration: 300,
@@ -61,44 +64,64 @@ export default function Index() {
   },[page])
 
   // Handle Android hardware back button
-useEffect(() => {
-  const backAction = () => {
+  useEffect(() => {
+    const backAction = () => {
 
-    if (showSheet) {
-      setShowSheet(false);
-      setOnOpenBottomSheet(false);
-      return true;
+      if (showSheet) {
+        setShowSheet(false);
+        setOnOpenBottomSheet(false);
+        return true;
+      }
+
+      if (!switchToRestaurant) {
+        setSwitchToRestaurant(true);
+        toggleRole(true);
+        return true;
+      }
+
+      if (shopData) {
+        setShopData(null);
+        return true;
+      }
+
+      if (restaurantData || restaurantData2) {
+        setRestaurantData(null);
+        setRestaurantData2(null);
+        return true;
+      }
+
+      return true; // allow default behavior
+    };
+
+    // Correct: store the subscription object
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    // Remove listener on cleanup
+    return () => backHandler.remove();
+  }, [showSheet, switchToRestaurant, shopData, restaurantData, restaurantData2]);
+
+
+  useEffect(()=>{
+    
+    const checkAwaitingOrders = async () =>{
+      const hasAwaitingOrders = await AsyncStorage.getItem("notify");
+
+      if (hasAwaitingOrders === "true")
+      {
+        setIsNotify(true);
+        console.log("unfinished order found")
+      }
+      else{
+        setIsNotify(false);
+      }
     }
 
-    if (!switchToShop) {
-      setSwitchToShop(true);
-      toggleRole(true);
-      return true;
-    }
 
-    if (shopData) {
-      setShopData(null);
-      return true;
-    }
-
-    if (restaurantData || restaurantData2) {
-      setRestaurantData(null);
-      setRestaurantData2(null);
-      return true;
-    }
-
-    return true; // allow default behavior
-  };
-
-  // Correct: store the subscription object
-  const backHandler = BackHandler.addEventListener(
-    "hardwareBackPress",
-    backAction
-  );
-
-  // Remove listener on cleanup
-  return () => backHandler.remove();
-}, [showSheet, switchToShop, shopData, restaurantData, restaurantData2]);
+    checkAwaitingOrders();
+  },[])
 
 
 
@@ -145,11 +168,11 @@ useEffect(() => {
             {((!shopData && !restaurantData && !restaurantData2) && page==="home") && (
               <View style={styles.toggleContainer}>
                 <Animated.View style={[styles.slider, { transform: [{ translateX }] }]} />
-                <TouchableOpacity style={styles.toggleSide} onPress={() => !switchToShop && toggleRole(true)}>
-                  <Text style={[styles.toggleText, switchToShop && styles.activeText]}>Resturants</Text>
+                <TouchableOpacity style={styles.toggleSide} onPress={() => !switchToRestaurant && toggleRole(true)}>
+                  <Text style={[styles.toggleText, switchToRestaurant && styles.activeText]}>Resturants</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.toggleSide} onPress={() => switchToShop && toggleRole(false)}>
-                  <Text style={[styles.toggleText, !switchToShop && styles.activeText]}>Shops</Text>
+                <TouchableOpacity style={styles.toggleSide} onPress={() => switchToRestaurant && toggleRole(false)}>
+                  <Text style={[styles.toggleText, !switchToRestaurant && styles.activeText]}>Shops</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -168,8 +191,8 @@ useEffect(() => {
             )}
 
 
-            {switchToShop ? (
-              restaurantData === null && (
+            {switchToRestaurant ? (
+              restaurantData === null && restaurantData2 === null &&(
                 <FoodDisplay
                   nameOfResturant={setRestaurantData}
                   nameOfResturant2={setRestaurantData2}
@@ -207,8 +230,10 @@ useEffect(() => {
                 setOnOpenBottomSheet(false);
                 setInactiveNavigator(false);
               }}
-              getRestaurantDataTransfer={switchToShop ? resturantAllDetails : shopAllDetails}
+              getRestaurantDataTransfer={switchToRestaurant ? resturantAllDetails : shopAllDetails}
               getImage={bottomSheetImage}
+              setNotify={setIsNotify}
+              disappearNavigator={setInactiveNavigator}
             />
           )}
 
@@ -222,7 +247,7 @@ useEffect(() => {
             {/* {page ? 
             (<Purchases/>) 
             : 
-            (switchToShop ? (
+            (switchToRestaurant ? (
               restaurantData === null && (
                 <FoodDisplay
                   nameOfResturant={setRestaurantData}

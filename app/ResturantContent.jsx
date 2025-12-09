@@ -205,3 +205,5 @@ const styles = StyleSheet.create({
     
     
 })
+
+//make sure fooddisplay is unmounted when here mounts

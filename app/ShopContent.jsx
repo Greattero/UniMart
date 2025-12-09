@@ -138,6 +138,7 @@ console.log("onOpen:", manuallyOpenSheet);
 const styles = StyleSheet.create({
     resturantPicture:{
         height:140,
+        width: "100%",
         marginBottom:150,
         backgroundColor:"red",
 

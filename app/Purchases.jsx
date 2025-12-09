@@ -1,22 +1,23 @@
-import { get, getDatabase, ref, onValue } from "firebase/database";
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { getDatabase, onValue, ref, update, runTransaction } from "firebase/database";
 import { useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { app } from "./firebaseConfig";
-import Octicons from '@expo/vector-icons/Octicons';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 export default function Purchases({setNotify}){
 
     const [getPurchases, setGetPurchases] = useState(null);
-    const [confirmed, setConfirmed] = useState(false);
+    const [confirmed, setConfirmed] = useState(null);
     const [rating, setRating] = useState(0);
+    const [purchaseId, setPurchaseId] = useState("");
     const starWidth = 25;
 
-    useEffect(() => {
     const db = getDatabase(app);
+
+    useEffect(() => {
+    // const db = getDatabase(app);
     const dbRef = ref(db, "buyer-profiles");
 
     const unsubscribe = onValue(dbRef, (snapshot) => {
@@ -40,13 +41,97 @@ export default function Purchases({setNotify}){
     return () => unsubscribe(); // clean up listener on unmount
     }, []);
 
-    useEffect(()=>{
-        getPurchases?.forEach(order=>{
-            if(order.status === "incomplete"){
+    useEffect(() => {
+        const updateNotify = async () => {
+            if (!getPurchases) return;
+
+            const hasIncomplete = getPurchases.some(
+                (order) => order.status === "incomplete"
+            );
+
+            if (hasIncomplete) {
                 setNotify(true);
+                await AsyncStorage.setItem("notify", "true");
+            } else {
+                setNotify(false);
+                await AsyncStorage.removeItem("notify");
             }
+        };
+
+        updateNotify();
+    }, [getPurchases]);
+
+    const handleConfirmOrder = async (purchaseId) =>{
+        // setConfirmed(true);
+        const userPath = `buyer-profiles/Foster Ametepey-242424/purchases/${purchaseId}`;
+        const userRef = ref(db, userPath);
+
+        await update(userRef, {
+            status:"complete",
         })
-    },[getPurchases])
+        .then(()=>{
+            console.log("Status changed to complete");
+            setConfirmed(true);
+        })
+        .catch(()=>{
+            console.log("Unable to change status")
+        })
+    }
+
+    const handleCancelOrder = async (purchaseId) =>{
+        const userPath = `buyer-profiles/Foster Ametepey-242424/purchases/${purchaseId}`;
+        const userRef = ref(db, userPath);
+
+        await update(userRef, {
+            status:"cancelled",
+        })
+        .then(()=>{
+            console.log("Status changed to cancel");
+            setConfirmed(false);
+        })
+        .catch(()=>{
+            console.log("Unable to change status")
+        })
+    }
+
+    const handleRateSubmission = async (purchaseId)=>{
+        setRating(0);
+        const userPath = `buyer-profiles/Foster Ametepey-242424/purchases/${purchaseId}`;
+        const userRef = ref(db, userPath);
+
+        const sellerPath = `restaurants/Jesi Dish/numberOfRatings`;  // it may be a shop too so check that it works for that too
+        const sellerRef = ref(db, sellerPath);
+
+        const sellerPath2 = `restaurants/Jesi Dish/sumOfRatings`;  // it may be a shop too so check that it works for that too
+        const sellerRef2 = ref(db, sellerPath2);
+
+        const ratePath = `restaurants/Jesi Dish`;
+        const rateRef = ref(db, ratePath);
+
+        await update(userRef, {
+            rated: true,
+        })
+        .then(()=>{
+            console.log("Rated successfully");
+        })
+        .catch(()=>{
+            console.log("Unable to rate")
+        })
+
+        await runTransaction(sellerRef, (currentValue) => (currentValue || 0) + 1);
+
+        await runTransaction(sellerRef2, (currentValue) => (currentValue || 0) + rating);
+
+        // await update(rateRef, {
+        // myRate: rating,
+        // })
+        // .then(()=>{
+        //     console.log("Rated value recorded");
+        // })
+        // .catch(()=>{
+        //     console.log("Unable to record rate")
+        // })
+    }
 
 
     
@@ -97,33 +182,39 @@ export default function Purchases({setNotify}){
                         <Text style={styles.price}>GH₵ {item.price}</Text>
 
                     </View>
-                    <View style={[styles.confirmationPanel, confirmed === true && {
+                    <View style={[styles.confirmationPanel, item.status === "complete" && {
                                                                 justifyContent: "flex-start",
                                                                 gap: 2,        // this will now work
                                                                 paddingLeft: 5
                                                             }]}>
-                        {confirmed === false ?
+                        {item.status === "incomplete" ?
                         <>
                             <Text> 
                                 Order received?
                             </Text>
                             <TouchableOpacity 
                             style={styles.confirmBtn}
-                            onPress={()=>setConfirmed(true)}
+                            onPress={()=>{
+                                handleConfirmOrder(item.id);                                
+                            }}
                             >
                                 <Text style={styles.confirmText}>Confirm</Text>
+                                
                             </TouchableOpacity>
                         
-                            <TouchableOpacity style={styles.cancelBtn}>
+                            <TouchableOpacity 
+                            style={styles.cancelBtn}
+                            onPress={()=>handleCancelOrder(item.id)}
+                            >
                                 <Text style={styles.confirmText}>Cancel Order</Text>
                             </TouchableOpacity>
                         </>
 
                         : 
 
-                        confirmed === true ?
+                         item.status === "complete" ?
                         <>
-                            {stars.map((icon, idx)=>(
+                            {item.rated === false && stars.map((icon, idx)=>(
                                 <Pressable
                                 key={idx}
                                 onPress={(e)=>handlePress(idx+1,e)}
@@ -134,15 +225,26 @@ export default function Purchases({setNotify}){
                             ))
                             }
 
-                            {rating!==0 && <TouchableOpacity 
+                            {console.log(item.status)}
+
+                            {(item.rated === false) && <TouchableOpacity 
                             style={[styles.confirmBtn, {marginLeft: 170}]}
-                            
+                            onPress={()=>handleRateSubmission(item.id)}
                             >
                                 <Text style={styles.confirmText}>Rate Seller</Text>
                             </TouchableOpacity>}
+
+                            {item.rated === true && 
+                                <Text>
+                                    Enjoy your purchase🤗                                
+                                </Text>
+                            }
                         
                         </>
-                        :null
+                        :
+                        <Text>
+                            Order has been cancelled
+                        </Text>
                         
                     }
                     </View>

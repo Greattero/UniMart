@@ -1,4 +1,4 @@
-import { ref, update, getDatabase } from "firebase/database";
+import { getDatabase, ref, update } from "firebase/database";
 import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MlkitOcr from 'react-native-mlkit-ocr';

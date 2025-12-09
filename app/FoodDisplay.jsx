@@ -300,3 +300,6 @@ const styles = StyleSheet.create({
   }
   
 });
+
+
+// when food at rice section is choseen.. it opens makeorder twice.. fix that

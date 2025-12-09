@@ -1,12 +1,13 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import BottomSheet from "@gorhom/bottom-sheet";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getDatabase, push, ref } from "firebase/database";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 
-export default function MakeOrder({disappearNavigator, getNameOfResturant, autoOpenFood, manuallyOpenFood, getFoodPrice, getRestaurantDataTransfer, onCloseCallback, getImage}) {
+export default function MakeOrder({disappearNavigator, getNameOfResturant, autoOpenFood, manuallyOpenFood, getFoodPrice, getRestaurantDataTransfer, onCloseCallback, getImage,setNotify}) {
     const [list, setList] = useState();
     const sheetRef = useRef(null);
     const snapPoints = useMemo(() => ["85%"], []);
@@ -53,7 +54,10 @@ export default function MakeOrder({disappearNavigator, getNameOfResturant, autoO
 
     const [totalPrice, setTotalPrice] = useState();       
 
-  const openSheet = () => sheetRef.current?.expand();
+  const openSheet = () => {sheetRef.current?.expand();
+            disappearNavigator?.(true)
+console.log("navigation has to disappear")
+  };
 
   console.log(`confirm: ${activateSheetManually}`)
 
@@ -68,14 +72,25 @@ export default function MakeOrder({disappearNavigator, getNameOfResturant, autoO
 
 
   
-  const submitOrder = () => {
+  const submitOrder = async () => {
 
-    push(ref(db, "buyer-profiles/Foster Ametepey-242424/purchases"),{
-      foodName: activateSheetManually || foodOfAutoOpen,
-      price: totalPrice,
-      image: "photo",
-      status: "incomplete"
+    try{
+      await push(ref(db, "buyer-profiles/Foster Ametepey-242424/purchases"),{
+        foodName: activateSheetManually || foodOfAutoOpen,
+        price: totalPrice,
+        image: "photo",
+        status: "incomplete",
+        rated: false
     })
+      
+      await AsyncStorage.setItem("notify", "true");
+      setNotify(true);
+  }
+  catch(err){
+    console.log(err);
+    await AsyncStorage.removeItem("notify");
+    setNotify(false);
+  }
 
   }
 

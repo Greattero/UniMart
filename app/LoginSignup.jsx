@@ -827,3 +827,6 @@ const styles = StyleSheet.create({
     
     
 })
+
+
+//when you type in name so fast that network make firebase doesnt recognize it then sends to scan face even when it doesnt have to
