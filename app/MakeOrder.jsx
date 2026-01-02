@@ -1,13 +1,19 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import BottomSheet from "@gorhom/bottom-sheet";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getDatabase, push, ref } from "firebase/database";
+import { getDatabase, push, ref,update } from "firebase/database";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, Image, Pressable, StyleSheet, Text, TouchableOpacity, View, KeyboardAvoidingView } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 
-export default function MakeOrder({disappearNavigator, getNameOfResturant, autoOpenFood, manuallyOpenFood, getFoodPrice, getRestaurantDataTransfer, onCloseCallback, getImage,setNotify}) {
+export default function MakeOrder({disappearNavigator, getNameOfResturant, 
+                                  autoOpenFood, manuallyOpenFood, 
+                                  getFoodPrice, getRestaurantDataTransfer, 
+                                  onCloseCallback, getImage,
+                                  setNotify, getMyProfile,
+                                  getSellerProfile, getMyContact,
+                                getMyName}) {
     const [list, setList] = useState();
     const sheetRef = useRef(null);
     const snapPoints = useMemo(() => ["85%"], []);
@@ -18,12 +24,17 @@ export default function MakeOrder({disappearNavigator, getNameOfResturant, autoO
     const [activateSheetManually, setActivateSheetManually] = useState(null);
     const [foodOfAutoOpen, setFoodForAutoOpen] = useState(null);
     const [resturantFullData, setResturantFullData] = useState([]);
+    const [myProfile, setMyProfile] = useState("");
+    const [sellerProfile, setSellerProfile] = useState("");
+    const [myContact, setMyContact] = useState("");
+    const [myName, setMyName] = useState("");
 
     const db = getDatabase();
 
 
 
     const [checked, setChecked] = useState({});
+    const [chosenAddOns, setChosenAddons] = useState([])
 
     // const [sendDisappearNavigatorSignal, setSendDisappearNavigatorSinal] = useState(false);
         console.log(`eeee: ${getRestaurantDataTransfer}`)
@@ -34,6 +45,22 @@ export default function MakeOrder({disappearNavigator, getNameOfResturant, autoO
         [id]: !prev[id],
     }));
     };
+
+    useEffect(()=>{
+      setMyName(getMyName)
+    },[getMyName])
+
+    useEffect(()=>{
+      setMyContact(getMyContact)
+    },[getMyContact])
+
+    useEffect(()=>{
+      setMyProfile(getMyProfile)
+    },[getMyProfile])
+
+    useEffect(()=>{
+        setSellerProfile(getSellerProfile)
+    },[getSellerProfile]);
 
     useEffect(() => {
           setActivateSheetManually(manuallyOpenFood)
@@ -52,6 +79,7 @@ export default function MakeOrder({disappearNavigator, getNameOfResturant, autoO
       setSelectedFoodImage(getImage);
     },[getImage])
 
+    console.log("jkl: ",JSON.stringify(resturantFullData))
     const [totalPrice, setTotalPrice] = useState();       
 
   const openSheet = () => {sheetRef.current?.expand();
@@ -62,25 +90,48 @@ console.log("navigation has to disappear")
   console.log(`confirm: ${activateSheetManually}`)
 
   useEffect(() => {
-    if (foodOfAutoOpen || activateSheetManually) {
-      // wait briefly so components mount first
+    const foodToSelect = manuallyOpenFood ?? autoOpenFood;
+    if (foodToSelect) {
+      setSelectedFood(foodToSelect);
       setTimeout(() => {
-        openSheet(); // 👈 automatically open bottom sheet
+        openSheet();
       }, 300);
     }
-  }, [foodOfAutoOpen, activateSheetManually]);
+  }, [manuallyOpenFood, autoOpenFood]);
 
+  console.log("whatsapp",myContact);
+  console.log("namee:", myName);
 
   
   const submitOrder = async () => {
 
+    const path = String(Math.floor(1 + Math.random() * 9000));
+
     try{
-      await push(ref(db, "buyer-profiles/Foster Ametepey-242424/purchases"),{
+      await update(ref(db, `buyer-profiles/${myProfile}/purchases/${path}`),{
         foodName: activateSheetManually || foodOfAutoOpen,
         price: totalPrice,
-        image: "photo",
-        status: "incomplete",
-        rated: false
+        addOns: checked,
+        image: selectedFoodImage,
+        status: "awaiting",
+        rated: false,
+        seller: sellerProfile,
+    })
+
+      await update(ref(db, `restaurants/${sellerProfile}/myOrders/${path}`),{
+        foodName: activateSheetManually || foodOfAutoOpen,
+        price: totalPrice,
+        addOns: checked,
+        image: selectedFoodImage,
+        seller: sellerProfile,
+        date: new Date().toISOString().split("T")[0],
+        contact: myContact,
+        orderId: `UM${String(Date.now()).slice(-4)}`,
+        buyer: myName,
+        buyerProfile: myProfile,
+        status: "awaiting",
+
+
     })
       
       await AsyncStorage.setItem("notify", "true");
@@ -96,47 +147,33 @@ console.log("navigation has to disappear")
 
   
 
-// useEffect(() => {
-//   setTimeout(() => {
-//     openSheet(); // automatically open whenever this screen shows
-//     console.log("chcahahahr")
-//   }, 100);
-// }, []); // runs only on mount
+      // console.log(`yyyyy ${getRestaurantDataTransfer}`)
+      // console.log(` bbbb ${manuallyOpenFood}`)          
+      // console.log('kakakak',selectedFood)
+      // console.log("ewww: ",JSON.stringify(resturantFullData))
 
-  // useEffect(() => {
-  //   const fetchedList = [
-  //       { id: 1, name: "Fried Plantain", price: 5 },
-  //       { id: 2, name: "Grilled Chicken", price: 15 },
-  //       { id: 3, name: "Fried Fish", price: 12 },
-  //       { id: 4, name: "Beef Stew", price: 10 },
-  //       { id: 5, name: "Gizzard Sauce", price: 8 },
-  //       { id: 6, name: "Coleslaw", price: 5 },
-  //       { id: 7, name: "Boiled Egg", price: 4 },
-  //       { id: 8, name: "Extra Jollof Scoop", price: 6 },
-  //       ]
+      console.log("things",checked);
+      console.log("Chosen", chosenAddOns);
 
 
-  //   setList(fetchedList);
-  // },[])
-      console.log(`yyyyy ${getRestaurantDataTransfer}`)
-      console.log(` bbbb ${manuallyOpenFood}`)
       useEffect(() => {
-        const selectedFood = activateSheetManually || foodOfAutoOpen;
 
-        if (selectedFood && Array.isArray(resturantFullData)) {
-          const match = resturantFullData.find(item => item[selectedFood]);
+        if (selectedFood && Object.keys(resturantFullData).length > 0) {
+          const match = resturantFullData[selectedFood]; // <-- dynamic key
+          console.log('fghg',selectedFood);
+          console.log("vvvvv: ", match);
 
-          if (match) {
-            const addOns = match[selectedFood].map((item, idx) => ({
-              id: idx.toString(), // or use a real ID if you have one
-              ...item,
-            }));
-            setList(addOns);
-            console.log("Found:", addOns);
-          } else {
-            setList([]);
-            console.log("No match found");
-          }
+          // if (match) {
+          //   // const addOns = match[selectedFood].map((item, idx) => ({
+          //   //   id: idx.toString(), // or use a real ID if you have one
+          //   //   ...item,
+          //   // }));
+            setList(match);
+          //   console.log("Found:", addOns);
+          // } else {
+          //   setList([]);
+          //   console.log("No match found");
+          // }
         }
       }, [resturantFullData, activateSheetManually, foodOfAutoOpen]);
 
@@ -146,8 +183,11 @@ console.log("navigation has to disappear")
 
     useEffect(()=>{
     const totalCalculation = list
-      ?.filter(item => checked[item.id]) // only selected items
+      ?.filter(item => checked[item.name]) // only selected items
       .reduce((sum, item) => sum + item.price, getFoodPrice) // sum up prices
+
+    const filteredAddOns = Object.keys(checked).filter(key=>checked[key]);
+    setChosenAddons(filteredAddOns);
 
     setTotalPrice(totalCalculation)
     console.log(`pricee ${getFoodPrice}`)
@@ -169,7 +209,7 @@ console.log("navigation has to disappear")
         nameOfResturant={getNameOfResturant}
         />
          */}
-
+        {console.log("🥺🥺", myProfile)}
         {/* Gray overlay behind sheet */}
         {isOpen && (
           <Pressable
@@ -213,11 +253,11 @@ console.log("navigation has to disappear")
             renderItem={({item}) => (
                 <View style={styles.checkboxContainer}>
                 <Pressable
-                onPress={() => toggleCheckbox(item.id)}
+                onPress={() => toggleCheckbox(item.name)}
                 style={styles.pressableContainer}
                 >
 
-                    {checked[item.id] ? (
+                    {checked[item.name] ? (
                     <>
                     <MaterialCommunityIcons 
                     name="checkbox-marked" 
@@ -358,13 +398,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "white"
-
   },
   addToOrderContainer:{
-    marginLeft:95,
+    marginLeft:70,
     marginTop: 12,
     height: 40,
-    width: 150, 
+    width: 145, 
     backgroundColor:"rgba(45, 202, 171, 1)",
     borderRadius: 5,
 

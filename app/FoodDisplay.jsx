@@ -24,12 +24,14 @@ export default function FoodDisplay({nameOfResturant, nameOfResturant2}){
 
 
     const [rice, setRice] = React.useState([]);
+    const [staple, setStaple] = React.useState([]);
+    const [snackies, setSnackies] = React.useState([]);
     const [resturants, setResturants] = React.useState([]);
 
     useEffect(() => {
       const fetchedFoods = async () => {
         const dbRef = ref(db);
-        const snapshot = await get(child(dbRef, "foodDisplay"));
+        const snapshot = await get(child(dbRef, "foodDisplay/rice"));
 
         if (snapshot.exists()) {
           const dataObj = snapshot.val();
@@ -47,6 +49,48 @@ export default function FoodDisplay({nameOfResturant, nameOfResturant2}){
       fetchedFoods();
     }, []);
 
+
+    useEffect(() => {
+      const fetchedFoods = async () => {
+        const dbRef = ref(db);
+        const snapshot = await get(child(dbRef, "foodDisplay/staple"));
+
+        if (snapshot.exists()) {
+          const dataObj = snapshot.val();
+          const dataArray = Object.keys(dataObj).map((key) => ({
+            id: key,
+            ...dataObj[key],
+          }));
+          console.log("Fetched foods:", dataArray);
+          setStaple(dataArray);
+        } else {
+          console.log("No data available");
+        }
+      };
+
+      fetchedFoods();
+    }, []);
+
+    useEffect(() => {
+      const fetchedFoods = async () => {
+        const dbRef = ref(db);
+        const snapshot = await get(child(dbRef, "foodDisplay/snackies"));
+
+        if (snapshot.exists()) {
+          const dataObj = snapshot.val();
+          const dataArray = Object.keys(dataObj).map((key) => ({
+            id: key,
+            ...dataObj[key],
+          }));
+          console.log("Fetched foods:", dataArray);
+          setSnackies(dataArray);
+        } else {
+          console.log("No data available");
+        }
+      };
+
+      fetchedFoods();
+    }, []);
 
     useEffect(() => {
       const fetchedFoods = async () => {
@@ -97,6 +141,8 @@ export default function FoodDisplay({nameOfResturant, nameOfResturant2}){
                                 nameOfResturant({
                                 resturant: item.restaurantName,
                                 foodPrice: item.price,
+                                seller: item.sellerName,
+                                image: item.image,
                                 autoOpenFood: item.name, // 👈 include which food triggered it
                               });
                             }} 
@@ -107,7 +153,7 @@ export default function FoodDisplay({nameOfResturant, nameOfResturant2}){
                         
                             <Text style={styles.name}>{item.name}</Text>
                             <Text style={styles.resturant}>{item.restaurantName}</Text>
-                            <Text style={styles.price}>{item.price}</Text>
+                            <Text style={styles.price}>{`₵${item.price}`}</Text>
                             
                     </View>
 
@@ -117,18 +163,21 @@ export default function FoodDisplay({nameOfResturant, nameOfResturant2}){
                 <Text style={styles.foodHeader}>Staple Dishes</Text>
 
                 <FlatList
-                data={rice}
+                data = {staple}
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                keyExtractor={(item)=>item.id}
-                contentContainerStyle={{paddingHorizontal: 10}}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle = {{paddingHorizontal: 10}}
                 renderItem={({item}) => (
                     <View>
                         <View style={styles.card}>
-                            <Image source={item.image} style={styles.image}/>
+                            <Image source={{uri: item.image}} style={styles.image}/>
                             <Pressable onPress={()=>{console.log("Hiii");
                                 nameOfResturant({
-                                resturant: item.resturant,
+                                resturant: item.restaurantName,
+                                foodPrice: item.price,
+                                seller: item.sellerName,
+                                image: item.image,
                                 autoOpenFood: item.name, // 👈 include which food triggered it
                               });
                             }} 
@@ -138,11 +187,11 @@ export default function FoodDisplay({nameOfResturant, nameOfResturant2}){
                         </View>
                         
                             <Text style={styles.name}>{item.name}</Text>
-                            <Text style={styles.resturant}>{item.resturant}</Text>
-                            <Text style={styles.price}>{item.price}</Text>
+                            <Text style={styles.resturant}>{item.restaurantName}</Text>
+                            <Text style={styles.price}>{`₵${item.price}`}</Text>
                             
                     </View>
-                    
+
                 )}
                 />
 
@@ -150,18 +199,21 @@ export default function FoodDisplay({nameOfResturant, nameOfResturant2}){
                 <Text style={styles.foodHeader}>Snackies</Text>
 
                 <FlatList
-                data={rice}
+                data = {snackies}
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                keyExtractor={(item)=>item.id}
-                contentContainerStyle={{paddingHorizontal: 10}}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle = {{paddingHorizontal: 10}}
                 renderItem={({item}) => (
                     <View>
                         <View style={styles.card}>
-                            <Image source={item.image} style={styles.image}/>
+                            <Image source={{uri: item.image}} style={styles.image}/>
                             <Pressable onPress={()=>{console.log("Hiii");
                                 nameOfResturant({
-                                resturant: item.resturant,
+                                resturant: item.restaurantName,
+                                foodPrice: item.price,
+                                seller: item.sellerName,
+                                image: item.image,
                                 autoOpenFood: item.name, // 👈 include which food triggered it
                               });
                             }} 
@@ -171,10 +223,11 @@ export default function FoodDisplay({nameOfResturant, nameOfResturant2}){
                         </View>
                         
                             <Text style={styles.name}>{item.name}</Text>
-                            <Text style={styles.resturant}>Jesi Dish</Text>
-                            <Text style={styles.price}>{item.price}</Text>
+                            <Text style={styles.resturant}>{item.restaurantName}</Text>
+                            <Text style={styles.price}>{`₵${item.price}`}</Text>
                             
                     </View>
+
                 )}
                 />
 
@@ -197,7 +250,7 @@ export default function FoodDisplay({nameOfResturant, nameOfResturant2}){
                             <Image source={{uri:item.coverPhoto}} style={styles.resturantImage}/>
                         </Pressable>
 
-                            <Text style={styles.resturantName}>{item.id}</Text>
+                            <Text style={styles.resturantName}>{item.restaurantName}</Text>
                         <View style={styles.starRating}>    
                             <Octicons name="star-fill" size={13} color="orange" />
                             <Text style={styles.rateDigit}>5.0</Text>       

@@ -13,7 +13,10 @@ import { FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native
 import { app } from "./firebaseConfig";
 
 
-export default function ResturantContent({manuallyOpenSheet,  disappearNavigator, getNameOfResturant, getNameOfResturant2, setRestaurantDataTransfer,sendPrice,sendImage}){
+export default function ResturantContent({manuallyOpenSheet,  disappearNavigator, 
+                                        getNameOfResturant, getNameOfResturant2, 
+                                        setRestaurantDataTransfer,sendPrice,
+                                        sendImage, getSellerName}){
    const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
     Montserrat_600SemiBold,
@@ -22,61 +25,97 @@ export default function ResturantContent({manuallyOpenSheet,  disappearNavigator
 
 
     const [content, setContent] = useState([]);
+    const [seller, setSeller] = useState("");
+    const [restaurantName, setRestaurantName] = useState("");
 
-    // useEffect(()=>{
-    //     const fetchedContent = [
-    //   { id: '1', name: 'Burger', price: 25, image: require("../assets/images/landjollof.jpg")},
-    //   { id: '2', name: 'Pizza', price: 40, image: require("../assets/images/oilrice.jpg") },
-    //   { id: '3', name: 'Burger', price: 60, image: require("../assets/images/landjollof.jpg")},
-    //   { id: '4', name: 'Pizza', price: 8, image: require("../assets/images/oilrice.jpg") },
-    //   { id: '5', name: 'Burger', price: 80, image: require("../assets/images/landjollof.jpg")},
-    //   { id: '6', name: 'Pizza', price: 35, image: require("../assets/images/jollof.jpg") },
-    //   { id: '7', name: 'Burger', price: 50, image: require("../assets/images/burger.jpg")},   
-        
-    //     ]
+    useEffect(()=>{
+        setSeller(getSellerName);
+    },[getSellerName])
 
-    //     setContent(fetchedContent);
-    // },[])
+
+    useEffect(()=>{
+        setRestaurantName(getNameOfResturant);
+    },[getNameOfResturant])
+
+    console.log("zzzzzzzzzzzzzzzzzz")
 
 
     useEffect(() => {
     const fetchFoods = async () => {
+                console.log("kkkkkkkkkkkkkkkkkkkkkkkkk")
+
         const db = getDatabase(app);
-        const dbRef = ref(db, "restaurants");
+        const dbRef = ref(db, `restaurants/${seller}`);
+        console.log("hkhjkhjkhk")
 
         const snapshot = await get(dbRef);
         if (snapshot.exists()) {
         const data = snapshot.val(); // this is an object
-        const restaurantsArray = Object.keys(data).map((key) => ({
-            id: key,
-            ...data[key],
-        }));
 
-        setRestaurantDataTransfer?.(restaurantsArray);
+        setRestaurantDataTransfer?.(data);
 
-        // Now find the restaurant that matches
-        const foundRestaurant = restaurantsArray.find(
-            (r) => (r.restaurantName === (getNameOfResturant || getNameOfResturant2) || r.id === (getNameOfResturant || getNameOfResturant2))
-        );
+        const restaurantsArray = data.foods
 
-        // If it has foods, set them as content
-        if (foundRestaurant && foundRestaurant.foods) {
-            const foodsArray = Object.keys(foundRestaurant.foods).map((key) => ({
-            id: key,
-            ...foundRestaurant.foods[key],
-            }));
-            setContent(foodsArray);
-            console.log(`yooo ${foodsArray[0].name}`)
-        } else {
-            setContent([]);
-        }
+        console.log(restaurantsArray);
+
+        setContent(restaurantsArray)
+
+        // if (restaurantsArray) {
+        //     const foodsArray = Object.keys(restaurantsArray).map((key) => ({
+        //     id: key,
+        //     ...restaurantsArray[key],
+        //     }));
+        //     setContent(foodsArray);
+        //     console.log(`yooo ${foodsArray[0].name}`)
+        // } else {
+        //     setContent([]);
+        // }
         } else {
         setContent([]);
         }
     };
 
     fetchFoods();
-    }, [getNameOfResturant]);
+    }, [restaurantName]);
+
+    // useEffect(() => {
+    // const fetchFoods = async () => {
+    //     const db = getDatabase(app);
+    //     const dbRef = ref(db, `restaurants`);
+
+    //     const snapshot = await get(dbRef);
+    //     if (snapshot.exists()) {
+    //     const data = snapshot.val(); // this is an object
+    //     const restaurantsArray = Object.keys(data).map((key) => ({
+    //         id: key,
+    //         ...data[key],
+    //     }));
+
+    //     setRestaurantDataTransfer?.(restaurantsArray);
+
+    //     // Now find the restaurant that matches
+    //     const foundRestaurant = restaurantsArray.find(
+    //         (r) => (r.restaurantName === (getNameOfResturant || getNameOfResturant2) || r.id === (getNameOfResturant || getNameOfResturant2))
+    //     );
+    //         console.log("xxxxxxxx")
+    //     // If it has foods, set them as content
+    //     if (foundRestaurant && foundRestaurant.foods) {
+    //         const foodsArray = Object.keys(foundRestaurant.foods).map((key) => ({
+    //         id: key,
+    //         ...foundRestaurant.foods[key],
+    //         }));
+    //         setContent(foodsArray);
+    //         console.log(`yooo ${foodsArray[0].name}`)
+    //     } else {
+    //         setContent([]);
+    //     }
+    //     } else {
+    //     setContent([]);
+    //     }
+    // };
+
+    // fetchFoods();
+    // }, [getNameOfResturant]);
 
 
     if (!fontsLoaded) {
@@ -91,7 +130,7 @@ console.log("onOpen:", manuallyOpenSheet);
                     
             <Image source={require("../assets/images/landjollof.jpg")} style={styles.resturantPicture}/>
             <View style={styles.resturantDetailsContainer}>
-                <Text style={styles.resturantName}>{getNameOfResturant || getNameOfResturant2}</Text>
+                <Text style={styles.resturantName}>{restaurantName || getNameOfResturant2}</Text>
                 <View style={styles.delivery}>
                     <MaterialIcons name="delivery-dining" size={21} color="#d8d3d3ff" />
                     <Text style={styles.otherResturantDetails}>30min delivery</Text>
@@ -110,7 +149,7 @@ console.log("onOpen:", manuallyOpenSheet);
             data={content}
             vertical
             showsVerticalScrollIndicator={false}
-            keyExtractor={(item)=>item.id}
+            keyExtractor={(item, index) => index.toString()} // use index as key
             contentContainerStyle={{paddingBottom: 20}}
             renderItem={({item}) => (
                 <Pressable 

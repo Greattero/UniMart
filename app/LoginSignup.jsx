@@ -9,9 +9,9 @@ import {
     signInWithCredential,
     signInWithEmailAndPassword
 } from "firebase/auth";
-import { getDatabase, onValue, ref, set } from "firebase/database";
+import { getDatabase, onValue, ref, set,get } from "firebase/database";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Animated, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Animated, Image, StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView, KeyboardAvoidingView, Platform} from "react-native";
 import { auth } from "./firebaseConfig";
 import { app } from "./firebaseConfig.js"; // your firebaseConfig file
 
@@ -19,11 +19,12 @@ import { app } from "./firebaseConfig.js"; // your firebaseConfig file
 
 
 
-export default function LoginSignup({sendCameraSignal, sendProfile, setLogger}){
+export default function LoginSignup({sendCameraSignal, sendProfile, setLogger, sendContact, sendName}){
 
 
     const [email, setEmail] = useState("");
     const [name, setName] = useState("");
+    const [contact, setContact] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -132,6 +133,10 @@ export default function LoginSignup({sendCameraSignal, sendProfile, setLogger}){
     }
 
     const handleGoogleSignIn = async () => {
+        if(signup && (!name.trim()|| !contact.trim())){
+            console.log("Fill name and contact before google signin")
+            return;
+        }
     try {
         // 1️⃣ Ensure Google Play Services are available (Android)
         await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
@@ -157,8 +162,10 @@ export default function LoginSignup({sendCameraSignal, sendProfile, setLogger}){
         console.log(new Date(fullCreationTime)); // e.g., Thu Nov 30 2025 08:26:28 GMT+0000
         console.log(new Date(fullLastSignInTime)); // e.g., Thu Nov 30 2025 08:29:32 GMT+0000
     
+        const myEmail = firebaseUser?.user?.email?.replace('.', ',');
 
-        console.log('🎉 Signed in with Google!', firebaseUser.user.email);
+        console.log('🎉 Signed in with Google!', myEmail);
+
         // Clear cached account to avoid stuck sign-in
         await GoogleSignin.signOut();
 
@@ -167,27 +174,42 @@ export default function LoginSignup({sendCameraSignal, sendProfile, setLogger}){
         if(isNewUser && fullySignedUp===null){
             setVisible(true);
             setFeedBack('newGoogleSignUp'); // or 'newGoogleSignUp' if you prefer
-            set(ref(db, `buyer-profiles/${firebaseUser.user.email.replace('.', ',')}`), {
+            set(ref(db, `buyer-profiles/${myEmail}`), {
             purchases: [{foodName: "", image: "", price: ""}],
             credentials: {indexNumber: "", referenceNumber: ""},
+            buyerName: name,
+            contact: contact
             });
             console.log("nnnnnnnnnnnnnnnnnn")
             sendCameraSignal(true);
-            sendProfile(firebaseUser.user.email)
+            sendProfile(myEmail);
+            sendName(name)
+            sendContact(contact);
         }
         else{
             // setVisible(true);
             // setFeedBack("googleAlreadyExists");
+            
+            get(ref(db, `buyer-profiles/${myEmail}`)).then((snapshot)=>{
+                const data = snapshot.val() || ""
+                console.log("ooooooooooooooooooooooooo ", data);
+
             if(fullySignedUp === false){
                 sendCameraSignal(true);
-                sendProfile(firebaseUser.user.email)
-                console.log("vvvvvvvvvvvvvvvvvvvvvvvv")
+                sendProfile(myEmail);
+                sendContact(data.contact);
+                sendName(data.buyerName)
+                console.log("vvvvvvvvvvvvvvvvvvvvvvvv");
             }
             else{
             setVisible(true);
+            sendProfile(myEmail);
+            sendContact(data.contact);
+            sendName(data.buyerName)
             setFeedBack("googleAlreadyExists");
             setLogger(true);
             }
+            })
 
         }
 
@@ -209,6 +231,17 @@ export default function LoginSignup({sendCameraSignal, sendProfile, setLogger}){
     const handleSubmit = () => {
         setLoading(true);
         if (signup === true){
+            if(
+                !name.trim()||
+                !email.trim()||
+                !contact.trim()||
+                !password.trim()||
+                !confirmPassword.trim()
+            )
+            {
+                console.log("Fill all fields correctly")
+                return;
+            }
             if (password !== confirmPassword) {
                 setVisible(true);
                 setFeedBack("notMatch")
@@ -249,9 +282,13 @@ export default function LoginSignup({sendCameraSignal, sendProfile, setLogger}){
                     set(ref(db, `buyer-profiles/${email.replace('.', ',')}`), {
                     purchases: [{foodName: "", image: "", price: ""}],
                     credentials: {indexNumber: "", referenceNumber: ""},
+                    buyerName: name,
+                    contact: contact
                     });
                     sendCameraSignal(true);
                     sendProfile(email);
+                    sendName(name)
+                    sendContact(contact);
             })
             .catch((err)=>{
                 setVisible(true);
@@ -273,17 +310,26 @@ export default function LoginSignup({sendCameraSignal, sendProfile, setLogger}){
         (
             signInWithEmailAndPassword(auth, email, password)
             .then(()=>{
+                get(ref(db, `buyer-profiles/${email.replace(".",",")}`)).then((snapshot)=>{
+                const data = snapshot.val() || ""
+                
                 if(fullySignedUp === false){
                     sendCameraSignal(true);
-                    sendProfile(email);
+                    sendProfile(email.replace(".",","));
+                    sendContact(data.contact);
+                    sendName(data.buyerName);
                 }
                 else{
                     setFeedBack("correctLogs");
                     setVisible(true);
                     console.log("🎉🎉 Logged in");
-                    setLogger(true)
+                    setLogger(true);
+                    sendProfile(email.replace(".",","));
+                    sendContact(data.contact);
+                    sendName(data.buyerName);
                     setLoading(false);
                 }
+                });
                 // setFeedBack("correctLogs");
                 // setVisible(true);
                 // console.log("🎉🎉 Logged in");
@@ -363,7 +409,17 @@ export default function LoginSignup({sendCameraSignal, sendProfile, setLogger}){
                 
                 <Text style={[styles.welcomeText, {marginTop: signup ? 15 : null}]}>Sign Up & Order</Text>
                 <Text style={styles.instruct}>Hey! Jump in and start ordering</Text>
-                <View style={[styles.inputContainer, , {marginTop: signup ? 75 : null}]}>
+                <KeyboardAvoidingView
+                    style={{ flex: 1 }}
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    keyboardVerticalOffset={180}
+                    >
+                  <ScrollView
+                        keyboardShouldPersistTaps="handled"
+                        contentContainerStyle={{ paddingBottom: 0 }}
+                        style={{flex:1}}
+                    >
+                <View style={[styles.inputContainer, , {marginTop: signup ? 0 : null}]}>
 
                     <View style={styles.passwordLengthIdContainer}>
                         <View style={[styles.passwordLengthId1, {backgroundColor: isShort ? "red" : isMedium ? "gold" : isLong ? "rgba(108, 197, 7, 1)" : "#3562"}]}>
@@ -390,6 +446,17 @@ export default function LoginSignup({sendCameraSignal, sendProfile, setLogger}){
                     keyboardType="email-address"
                     />
                     <TextInput
+                    placeholder="Contact"
+                    placeholderTextColor="gray"
+                    style={styles.input}
+                    value={contact}
+                    onChangeText={setContact}
+                    keyboardType="email-address"
+                    />
+
+
+ 
+                    <TextInput
                     placeholder="Password"
                     placeholderTextColor="gray"
                     value={password}
@@ -413,6 +480,14 @@ export default function LoginSignup({sendCameraSignal, sendProfile, setLogger}){
                     
 
                 </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+                <View style={{
+                    flex:1,
+                    position: "absolute",
+                    height: 200,
+                    bottom: 300
+                }}>
 
                     <TouchableOpacity
                     style={[styles.signinContainer, {marginTop: signup ? 295 : null}]}
@@ -437,7 +512,7 @@ export default function LoginSignup({sendCameraSignal, sendProfile, setLogger}){
                     <Text style={styles.altSigninText}>Or sign up with</Text>
                 </View>
 
-                <View style={[styles.googleContainer, {marginTop: signup ? 35 : null}]}>
+                <View style={[styles.googleContainer, {marginTop: signup ? 7 : null}]}>
                     <TouchableOpacity
                     style={styles.googleBtn}
                     onPress={()=>handleGoogleSignIn()}
@@ -445,6 +520,7 @@ export default function LoginSignup({sendCameraSignal, sendProfile, setLogger}){
                         <Image source={require("../assets/images/google.png")} style={styles.googleImage}/>
                         <Text style={styles.googleText}>Google</Text>
                     </TouchableOpacity>
+                    </View>
                     
                 </View> 
                 
@@ -504,11 +580,11 @@ export default function LoginSignup({sendCameraSignal, sendProfile, setLogger}){
                     Forgot your password?
                     </Text>
                 </TouchableOpacity>
-                <View style={styles.line}>
+                <View style={[styles.line, {marginTop: !signup && 35}]}>
 
                 </View>
 
-                <View  style={styles.altSiginTextContainer}>
+                <View  style={[styles.altSiginTextContainer,{marginTop: !signup && 377, top: !signup && null , left: !signup && null}]}>
                     <Text style={styles.altSigninText}>Or sign in with</Text>
                 </View>
 
@@ -650,9 +726,9 @@ const styles = StyleSheet.create({
     },
     inputContainer:{
         
-        position: "absolute",
+        // position: "absolute",
         // left: 30,
-        marginTop: 100,
+        marginTop: 0,
         alignItems: "center",
         // justifyContent: "center",
         
@@ -668,7 +744,7 @@ const styles = StyleSheet.create({
         color: "black"
     },
     signinContainer:{
-        marginTop: 180,
+        marginTop: 30,
         backgroundColor:"rgba(70, 180, 127, 1)",
         width: 300,
         height: 50,
@@ -694,17 +770,21 @@ const styles = StyleSheet.create({
     },
     altSiginTextContainer:{
         position:"absolute",
-        marginTop: 440,
         backgroundColor: "#f5f4f4ff",
         width: 125,
-        alignItems:"center",        
+        alignItems:"center",
+        top: -77,
+        left: 80       
     },
     altSigninText:{
         color:"#8e8989b8",
+        // position: "absolute",
+        // bottom: 58,
+        // left: 100
     },
     googleContainer:{
         // flexDirection: "row",
-        // marginTop: 18,
+        marginTop: 18,
         // backgroundColor: "#f5f4f4ff",
         // width: 300,
         // height: 50,

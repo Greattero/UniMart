@@ -1,15 +1,15 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, BackHandler, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import FaceScanner from "./FaceScanner.jsx";
 import FoodDisplay from "./FoodDisplay.jsx";
+import LoginSignup from "./LoginSignup.jsx";
 import MakeOrder from "./MakeOrder.jsx";
 import Navigation from "./Navigation.jsx";
+import Purchases from "./Purchases.jsx";
 import ResturantContent from "./ResturantContent.jsx";
 import ShopContent from "./ShopContent.jsx";
 import ShopDisplay from "./ShopDisplay.jsx";
-import Purchases from "./Purchases.jsx";
-import LoginSignup from "./LoginSignup.jsx";
-import FaceScanner from "./FaceScanner.jsx";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Index() {
   const [inactiveNavigator, setInactiveNavigator] = useState(false);
@@ -29,8 +29,15 @@ export default function Index() {
   const [profile, setProfile] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isNotify, setIsNotify] = useState(false);
+  const [contact, setContact] = useState("");
+  const [myName, setMyName] = useState("");
 
-  console.log(`restaurantData`);
+  console.log(`ttttttttt ${restaurantData?.resturant}`);
+    console.log(`uuuuuuuuuu ${restaurantData?.seller}`);
+    console.log("wyywy: ", profile);
+    console.log("the name🌚🌚: ", myName);
+    
+
 
   // Toggle role with animation
   const toggleRole = (targetShop) => {
@@ -146,6 +153,7 @@ export default function Index() {
             >
             <Purchases
             setNotify={setIsNotify}
+            getMyProfile={profile}
             />
             {/* <Navigation 
             goToPurchases={setPage}
@@ -187,6 +195,7 @@ export default function Index() {
                 getNameOfResturant2={restaurantData2}
                 sendPrice={setPriceofFood}
                 sendImage={setBottomSheetImage}
+                getSellerName={restaurantData?.seller}
               />
             )}
 
@@ -227,13 +236,17 @@ export default function Index() {
               manuallyOpenFood={onOpenBottomSheet}
               onCloseCallback={() => {
                 setShowSheet(false);
-                setOnOpenBottomSheet(false);
+                setOnOpenBottomSheet(null);
                 setInactiveNavigator(false);
               }}
               getRestaurantDataTransfer={switchToRestaurant ? resturantAllDetails : shopAllDetails}
-              getImage={bottomSheetImage}
+              getImage={bottomSheetImage||restaurantData?.image}
               setNotify={setIsNotify}
               disappearNavigator={setInactiveNavigator}
+              getMyProfile={profile}
+              getMyContact={contact}
+              getSellerProfile={restaurantData?.seller}
+              getMyName={myName}
             />
           )}
 
@@ -271,6 +284,8 @@ export default function Index() {
       {!cameraSignal &&   <LoginSignup
           sendCameraSignal={setCameraSignal}
           sendProfile={setProfile}
+          sendContact={setContact}
+          sendName={setMyName}
           setLogger={setIsLoggedIn}               // when you integrate the logout, make sure you handle the setislogged in properly
           />}
           {(cameraSignal && profile) ? <FaceScanner getProfile={profile} setMount={setCameraSignal} setLogger={setIsLoggedIn}/> : null}

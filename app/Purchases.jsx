@@ -1,45 +1,72 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { getDatabase, onValue, ref, update, runTransaction } from "firebase/database";
+import { getDatabase, onValue, ref, update, runTransaction,get } from "firebase/database";
 import { useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { app } from "./firebaseConfig";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
-export default function Purchases({setNotify}){
+export default function Purchases({setNotify, getMyProfile}){
 
     const [getPurchases, setGetPurchases] = useState(null);
     const [confirmed, setConfirmed] = useState(null);
     const [rating, setRating] = useState(0);
     const [purchaseId, setPurchaseId] = useState("");
+    const [myProfile, setMyProfile] = useState("");
+    const [sellerProfile, setSellerProfile] = useState("");
     const starWidth = 25;
 
     const db = getDatabase(app);
 
-    useEffect(() => {
-    // const db = getDatabase(app);
-    const dbRef = ref(db, "buyer-profiles");
+    useEffect(()=>{
+        setMyProfile(getMyProfile)
+    },[getMyProfile]);
 
-    const unsubscribe = onValue(dbRef, (snapshot) => {
-        if (snapshot.exists()) {
-        const data = snapshot.val();
-        const foundProfile = data["Foster Ametepey-242424"];
-        if (foundProfile && foundProfile.purchases) {
-            const purchasesArray = Object.keys(foundProfile.purchases).map(key => ({
+
+
+    // console.log(myProfile);
+
+    const purchaseRef = ref(db, `buyer-profiles/${myProfile}/purchases`);
+
+    get(purchaseRef).then(snapshot => {
+
+        const purchases = snapshot.val();
+        // console.log(purchases)
+        if (purchases) {
+            const purchasesArray = Object.keys(purchases).map(key => ({
             id: key,
-            ...foundProfile.purchases[key],
+            ...purchases[key],
             }));
             setGetPurchases(purchasesArray);
         } else {
             setGetPurchases([]);
         }
-        } else {
-        setGetPurchases([]);
-        }
+                
     });
+    // useEffect(() => {
+    // // const db = getDatabase(app);
+    // // const dbRef = ref(db, `buyer-profiles/${myProfile}/purchases`);
 
-    return () => unsubscribe(); // clean up listener on unmount
-    }, []);
+    // const unsubscribe = onValue(dbRef, (snapshot) => {
+    //     if (snapshot.exists()) {
+    //     const purchases = snapshot.val();
+    //     console.log(purchases)
+    //     if (purchases) {
+    //         const purchasesArray = Object.keys(purchases).map(key => ({
+    //         id: key,
+    //         ...purchases[key],
+    //         }));
+    //         setGetPurchases(purchasesArray);
+    //     } else {
+    //         setGetPurchases([]);
+    //     }
+    //     } else {
+    //     setGetPurchases([]);
+    //     }
+    // });
+
+    // return () => unsubscribe(); // clean up listener on unmount
+    // }, []);
 
     useEffect(() => {
         const updateNotify = async () => {
@@ -63,8 +90,20 @@ export default function Purchases({setNotify}){
 
     const handleConfirmOrder = async (purchaseId) =>{
         // setConfirmed(true);
-        const userPath = `buyer-profiles/Foster Ametepey-242424/purchases/${purchaseId}`;
+        const userPath = `buyer-profiles/${myProfile}/purchases/${purchaseId}`;
         const userRef = ref(db, userPath);
+
+        get(userRef).then((snapshot)=>{
+
+            const data = snapshot.val() || [];
+
+            const seller = data.seller;
+
+            setSellerProfile(seller)
+
+            console.log(`Buying from ${seller}`)
+
+        });
 
         await update(userRef, {
             status:"complete",
@@ -79,7 +118,7 @@ export default function Purchases({setNotify}){
     }
 
     const handleCancelOrder = async (purchaseId) =>{
-        const userPath = `buyer-profiles/Foster Ametepey-242424/purchases/${purchaseId}`;
+        const userPath = `buyer-profiles/${myProfile}/purchases/${purchaseId}`;
         const userRef = ref(db, userPath);
 
         await update(userRef, {
@@ -95,17 +134,19 @@ export default function Purchases({setNotify}){
     }
 
     const handleRateSubmission = async (purchaseId)=>{
-        setRating(0);
-        const userPath = `buyer-profiles/Foster Ametepey-242424/purchases/${purchaseId}`;
+
+        console.log("😂😂😂: ", sellerProfile)
+
+        const userPath = `buyer-profiles/${myProfile}/purchases/${purchaseId}`;
         const userRef = ref(db, userPath);
 
-        const sellerPath = `restaurants/Jesi Dish/numberOfRatings`;  // it may be a shop too so check that it works for that too
+        const sellerPath = `restaurants/${sellerProfile}/numberOfRatings`;  // it may be a shop too so check that it works for that too
         const sellerRef = ref(db, sellerPath);
 
-        const sellerPath2 = `restaurants/Jesi Dish/sumOfRatings`;  // it may be a shop too so check that it works for that too
+        const sellerPath2 = `restaurants/${sellerProfile}/sumOfRatings`;  // it may be a shop too so check that it works for that too
         const sellerRef2 = ref(db, sellerPath2);
 
-        const ratePath = `restaurants/Jesi Dish`;
+        const ratePath = `restaurants/${sellerProfile}`;
         const rateRef = ref(db, ratePath);
 
         await update(userRef, {
@@ -121,6 +162,8 @@ export default function Purchases({setNotify}){
         await runTransaction(sellerRef, (currentValue) => (currentValue || 0) + 1);
 
         await runTransaction(sellerRef2, (currentValue) => (currentValue || 0) + rating);
+
+        setRating(0);
 
         // await update(rateRef, {
         // myRate: rating,
@@ -178,6 +221,10 @@ export default function Purchases({setNotify}){
                 renderItem={({item}) => (
                     <>
                     <View style={styles.container}>
+                        <View style={styles.purchaseStatusContainer}>
+                            <Text style={styles.purchaseStatus}>Awaiting Confirmation</Text>
+
+                        </View>
                         <Text style={styles.foodName}>{item.foodName}</Text>
                         <Text style={styles.price}>GH₵ {item.price}</Text>
 
@@ -187,9 +234,18 @@ export default function Purchases({setNotify}){
                                                                 gap: 2,        // this will now work
                                                                 paddingLeft: 5
                                                             }]}>
-                        {item.status === "incomplete" ?
+                        {item.status === "awaiting" ?
                         <>
-                            <Text> 
+                            <Text style={styles.orderStatus}> 
+                                Wait for seller to accept order 🌚
+                            </Text>
+                        </>
+
+                        : 
+                        item.status==="incomplete" ?
+
+                        <>
+                            <Text style={styles.orderStatus}> 
                                 Order received?
                             </Text>
                             <TouchableOpacity 
@@ -209,8 +265,7 @@ export default function Purchases({setNotify}){
                                 <Text style={styles.confirmText}>Cancel Order</Text>
                             </TouchableOpacity>
                         </>
-
-                        : 
+                        :
 
                          item.status === "complete" ?
                         <>
@@ -225,24 +280,24 @@ export default function Purchases({setNotify}){
                             ))
                             }
 
-                            {console.log(item.status)}
+                            {/* {console.log(item.status)} */}
 
                             {(item.rated === false) && <TouchableOpacity 
-                            style={[styles.confirmBtn, {marginLeft: 170}]}
+                            style={[styles.confirmBtn, {marginLeft:item.status === "complete" && 110}]}
                             onPress={()=>handleRateSubmission(item.id)}
                             >
                                 <Text style={styles.confirmText}>Rate Seller</Text>
                             </TouchableOpacity>}
 
                             {item.rated === true && 
-                                <Text>
-                                    Enjoy your purchase🤗                                
+                                <Text style={styles.orderStatus}>
+                                    Enjoy your purchase ❤️                                
                                 </Text>
                             }
                         
                         </>
                         :
-                        <Text>
+                        <Text style={styles.orderStatus}>
                             Order has been cancelled
                         </Text>
                         
@@ -261,42 +316,46 @@ export default function Purchases({setNotify}){
 //when user makes an order, the yet to confirm or cancelled orders should be numbered on the purchases icon
 const styles = StyleSheet.create({
     container:{
+        flex: 1,
         borderWidth: 0,
-        width: 400,
+        width: 340,
         borderTopLeftRadius: 5,
         borderTopRightRadius: 5,
-        backgroundColor: "rgba(32, 35, 93, 1)",
-        elevation: 6,
+        backgroundColor: "white",
+        // elevation: 6,
         height: 100,
         marginTop: 5,
+        borderColor:"rgba(219, 224, 232, 0.6)",
+        borderWidth:2,
     },
     foodName:{
-        paddingBottom: 25,
-        paddingTop: 6,
-        paddingLeft: 5,
+        paddingBottom: 5,
+        marginTop: 30,
+        paddingLeft: 15,
         fontSize: 20,
         fontWeight: "bold",
-        color: "white"
+        color: "black"
     },
     price:{
-        color: "rgba(214, 208, 14, 1)",
-        paddingLeft: 5,
+        color: "rgba(131, 130, 127, 1)",
+        paddingLeft: 15,
+        fontWeight:"bold",
 
     },
     confirmationPanel:{
         flexDirection: "row",
         alignItems: "center",
         justifyContent:"space-between",
-        backgroundColor: "rgba(205, 204, 204, 0.6)",
+        backgroundColor: "rgba(219, 224, 232, 0.6)",
         height:45,
         borderBottomLeftRadius: 5,
         borderBottomRightRadius: 5,
-        width: 400,
+        width: 340,
         marginBottom: 10,
 
     },
     confirmBtn:{
-        marginLeft: 115, // pushes it to the right
+        marginLeft: 50, // pushes it to the right
         backgroundColor: "rgba(32, 93, 63, 1)",   
         padding: 5,
         borderRadius: 5,
@@ -324,6 +383,28 @@ const styles = StyleSheet.create({
     listsContainer:{
         flex:1,
         alignItems:"center",
+    },
+    purchaseStatus:{
+        marginTop: 8,
+        padding: 5,
+        backgroundColor:"black",
+        width: 150,
+        // marginTop:20,
+        marginBottom: 15,
+        height:30,
+        borderRadius: 80,
+        color: "white"
+
+
+    },
+    purchaseStatusContainer:{
+        flex: 1,
+        marginLeft: 10,
+    },
+    orderStatus:{
+        marginLeft: 15,
+        fontWeight: "bold",
+        color: "rgba(0, 0, 0, 1)"
     }
 
 })

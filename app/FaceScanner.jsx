@@ -10,7 +10,7 @@ export default function FaceScanner({getProfile,setMount, setLogger}){
 
     // ... (rest of your state and useEffect hooks) ...
     const camera = useRef(null);
-    const device = useCameraDevice('front')
+    const device = useCameraDevice('back')
     const { hasPermission, requestPermission } = useCameraPermission() // Added requestPermission
     const [loading, setLoading] = useState(false);
 
@@ -97,7 +97,7 @@ const captureAndExtract = async () => {
     setStudentNumber(studentNum);
     setRefNum(studentRef);
     
-    const userPath = `buyer-profiles/${email.replace(".",",")}/credentials`;
+    const userPath = `buyer-profiles/${email}/credentials`;
     const userRef = ref(db, userPath);
 
     await update(userRef, {
